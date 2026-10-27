@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel de Prevención · Perelló</title><meta name="robots" content="noindex">
+<style>
+:root { --az:#0F543A; --rj:#8C7548; --am:#F3E3B5; --vd:#2E7D32; --tx:#1F2328; --mu:#6B7280; --bg:#F2F2F4; --ln:#E2E3E8; }
+* { box-sizing:border-box; } body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; background:var(--bg); color:var(--tx); }
+button, input, select, textarea { font:inherit; }
+.top { background:#fff; border-bottom:4px solid var(--rj); padding:10px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; position:sticky; top:0; z-index:5; }
+.top img { height:40px; } .top .tt { flex:1; min-width:160px; } .top .tt b { display:block; color:var(--az); letter-spacing:1px; font-size:13px; } .top .tt span { font-size:13px; color:var(--mu); }
+.lnk { background:none; border:0; color:var(--az); text-decoration:underline; cursor:pointer; padding:4px; text-align:left; }
+.wrap { max-width:1180px; margin:0 auto; padding:16px; }
+.tabs { display:flex; gap:6px; margin-bottom:14px; overflow-x:auto; } .tab { border:0; background:#fff; border-radius:999px; padding:9px 16px; font-weight:bold; color:var(--mu); cursor:pointer; white-space:nowrap; border:2px solid transparent; }
+.tab.on { background:var(--az); color:#fff; } .tab .ct { background:#C62828; color:#fff; border-radius:999px; padding:0 7px; margin-left:6px; font-size:12px; }
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin-bottom:14px; }
+.kpi { background:#fff; border-radius:14px; padding:12px 14px; border-left:6px solid var(--az); } .kpi small { display:block; font-size:11px; letter-spacing:1px; color:var(--mu); font-weight:bold; text-transform:uppercase; }
+.kpi b { font-size:30px; display:block; margin-top:4px; } .kpi span { font-size:12px; color:var(--mu); }
+.card { background:#fff; border-radius:14px; padding:14px; margin-bottom:14px; } .card h3 { margin:0 0 10px; font-size:15px; color:var(--az); letter-spacing:.5px; }
+table { width:100%; border-collapse:collapse; font-size:14px; } th { text-align:left; font-size:11px; color:var(--mu); letter-spacing:1px; text-transform:uppercase; padding:6px; border-bottom:2px solid var(--ln); }
+td { padding:8px 6px; border-bottom:1px solid var(--ln); vertical-align:middle; } .num { text-align:right; white-space:nowrap; }
+.bar { height:8px; background:var(--ln); border-radius:99px; overflow:hidden; min-width:70px; } .bar i { display:block; height:100%; border-radius:99px; }
+.pc { font-weight:bold; }
+.filtros { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; align-items:center; }
+.chip { border:2px solid var(--ln); background:#fff; border-radius:999px; padding:6px 12px; cursor:pointer; font-size:13px; } .chip.on { border-color:var(--az); background:#FFF4CC; color:var(--az); font-weight:bold; }
+.buscar { flex:1; min-width:180px; border:2px solid var(--ln); border-radius:10px; padding:8px 10px; } select { border:2px solid var(--ln); border-radius:10px; padding:8px; background:#fff; }
+.per { display:grid; grid-template-columns:1fr auto; gap:6px 12px; padding:10px 4px; border-bottom:1px solid var(--ln); }
+.per .nm { font-weight:bold; } .per .sb { font-size:12px; color:var(--mu); } .per .bd { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; align-items:center; }
+.bdg { font-size:12px; border-radius:6px; padding:2px 7px; font-weight:bold; white-space:nowrap; } .ok { background:#E8F5E9; color:var(--vd); } .bad { background:#FDECEC; color:#C62828; } .warn { background:#FFF4D6; color:#8A5A00; } .gr { background:#F1F3F5; color:var(--mu); }
+.atr { grid-column:1/-1; font-size:12px; color:#C62828; display:none; } .per.open .atr { display:block; } .per .av { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--mu); }
+.reps { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
+.rep { background:#fff; border-radius:14px; overflow:hidden; display:flex; flex-direction:column; border:2px solid var(--ln); } .rep.abierto { border-color:#FFB300; }
+.rep .im { height:150px; background:#ECEFF1 center/cover no-repeat; display:flex; align-items:center; justify-content:center; font-size:40px; }
+.rep .bx { padding:12px; display:flex; flex-direction:column; gap:6px; flex:1; } .rep .ds { font-size:14px; } .rep .mt { font-size:12px; color:var(--mu); }
+.rep textarea { width:100%; border:2px solid var(--ln); border-radius:8px; padding:6px; font-size:13px; } .btn { border:0; border-radius:10px; padding:10px; font-weight:bold; cursor:pointer; background:var(--am); }
+.btn.az { background:var(--az); color:#fff; }
+.login { max-width:380px; margin:12vh auto; background:#fff; border-radius:18px; padding:24px; display:flex; flex-direction:column; gap:12px; text-align:center; border-top:8px solid var(--az); }
+.login img { height:72px; margin:0 auto; } .login input { border:2px solid var(--ln); border-radius:10px; padding:12px; font-size:18px; text-align:center; letter-spacing:1px; }
+.err { color:#C62828; font-size:13px; min-height:16px; } .vacio { color:var(--mu); padding:20px; text-align:center; }
+.cargando { text-align:center; padding:40px; color:var(--mu); }
+@media (max-width:600px) { .per { grid-template-columns:1fr; } .per .bd { justify-content:flex-start; } .kpi b { font-size:24px; } .ocm { display:none; } }
+</style></head><body>
+<div id="app"><div class="cargando">Cargando…</div></div>
+<script>
+const URL_API = 'https://script.google.com/macros/s/AKfycbyWjfVll6bq0hZKZenjHl2rdUr_oF4EYdqIF_I9Rnr4GbvprZ1TpdlhfKdtRPERetHwQQ/exec', LOGO = 'data:image/png;base64,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';
+const $ = s => document.querySelector(s), esc = s => String(s == null ? '' : s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+const col = p => p === null ? '#90A4AE' : p >= .9 ? '#2E7D32' : p >= .7 ? '#F9A825' : '#C62828';
+const pct = (a, b) => b ? a / b : null, fp = p => p === null ? '—' : Math.round(p * 100) + '%';
+const bar = p => `<div class="bar"><i style="width:${p === null ? 0 : Math.round(p * 100)}%;background:${col(p)}"></i></div>`;
+let D = null, AUTH = null, vista = 'resumen', fPer = 'todos', fRep = 'Abierto', fSuc = '', q = '', fTipo = '', fIns = '', qJ = '';
+const TIPOS = [['', 'Todos'], ['Planta', '🏭 Planta'], ['Temporero', '🍂 Temporeros'], ['Administrativo', '💼 Administrativos']];
+const bTipo = t => t === 'Temporero' ? '<span class="bdg" style="background:#FFF0E0;color:#B84A00">🍂 Temporero</span>' : t === 'Administrativo' ? '<span class="bdg gr">💼 Administrativo</span>' : '<span class="bdg ok">🏭 Planta</span>';
+const cleanRut = r => String(r || '').toUpperCase().replace(/[^0-9K]/g, '');
+const fmtRut = r => { r = cleanRut(r).replace(/^0+/, ''); return r.length < 2 ? r : r.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + r.slice(-1); };
+async function rutHash(rut) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('cc|' + cleanRut(rut).replace(/^0+/, ''))); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+// La sesión es la misma de la página de capacitaciones (RUT + clave del trabajador)
+try { const p = JSON.parse(localStorage.getItem('perello_cap_persona') || 'null'); if (p && p.rut && p.k) AUTH = { rut: p.rut, k: p.k }; } catch (e) {}
+try { if (!AUTH) { const p = JSON.parse(sessionStorage.getItem('perello_panel_auth') || 'null'); if (p && p.rut && p.k) AUTH = p; } } catch (e) {}
+
+function login(msg) {
+$('#app').innerHTML = `<div class="login"><img src="${LOGO}" alt="Perelló"><h2 style="margin:0">Panel de Prevención</h2>
+<p style="margin:0;color:#6B7280">Administración y jefaturas. Entra con tu RUT y tu misma clave de capacitaciones (tu nombre y año de nacimiento, ej: juan1985, o la que cambiaste).</p>
+<form onsubmit="return false" style="display:flex;flex-direction:column;gap:12px"><input id="ru" name="username" placeholder="RUT (ej: 12.345.678-9)" maxlength="14" autocomplete="username" inputmode="text"><input id="cl" type="password" name="password" placeholder="Clave" maxlength="40" autocomplete="current-password" autocapitalize="none">
+<label style="display:flex;gap:8px;align-items:center;justify-content:center;cursor:pointer"><input type="checkbox" id="rec" checked style="width:20px;height:20px"> Recordarme en este equipo</label></form><div class="err">${msg || ''}</div><button class="btn az" id="ent">Entrar</button></div>`;
+const go = () => { const rut = $('#ru').value, k = $('#cl').value.trim(); if (cleanRut(rut).length < 7 || !k) { $('.err').textContent = 'Escribe tu RUT y tu clave.'; return; } AUTH = { rut: fmtRut(rut), k, nuevo: true }; cargar(); };
+$('#ent').onclick = go; $('#cl').onkeydown = e => { if (e.key === 'Enter') go(); }; $('#ru').onkeydown = e => { if (e.key === 'Enter') $('#cl').focus(); };
+}
+async function cargar(enFondo) {
+if (!AUTH) return login();
+if (!enFondo) $('#app').innerHTML = '<div class="cargando">Cargando datos…</div>';
+try {
+AUTH.h = await rutHash(AUTH.rut); const r = await fetch(URL_API + '?panel=' + AUTH.h + '&k=' + encodeURIComponent(AUTH.k)).then(r => r.json());
+if (!r.ok) { try { localStorage.removeItem('perello_panel_cache'); sessionStorage.removeItem('perello_panel_auth'); } catch (e) {} const n = AUTH.nuevo; AUTH = null;
+return login(n ? 'RUT o clave incorrectos, o este RUT no tiene panel de jefatura. Si no recuerdas tu clave, contacta a administración.' : ''); }
+if (AUTH.nuevo) { delete AUTH.nuevo; try { const rec = $('#rec'); if (!rec || rec.checked) { const p = JSON.parse(localStorage.getItem('perello_cap_persona') || '{}'); localStorage.setItem('perello_cap_persona', JSON.stringify(Object.assign(p, { name: (r.user || {}).nombre || p.name, rut: AUTH.rut, k: AUTH.k }))); } else sessionStorage.setItem('perello_panel_auth', JSON.stringify(AUTH)); } catch (e) {} }
+D = r; try { localStorage.setItem('perello_panel_cache', JSON.stringify(Object.assign({}, r, { _rut: AUTH.rut }))); } catch (e) {} pintar();
+} catch (e) { if (!enFondo) login('No se pudo conectar. Revisa tu internet e intenta de nuevo.'); }
+}
+function resumenDe(ps, reps) {
+const s = k => ps.reduce((a, p) => a + (p[k] || 0), 0);
+return { n: ps.length, aFecha: pct(s('okV'), s('dV')), anual: pct(s('ok'), s('d')), ind: ps.filter(p => p.ind !== 'falta').length, ds: ps.filter(p => p.ds44).length,
+sinInd: ps.filter(p => p.ind === 'falta').length, atr: ps.filter(p => p.atr && p.atr.length).length, rep: reps.filter(r => r.estado !== 'Resuelto').length };
+}
+function pintar() {
+const u = D.user, P = D.personas, R = D.reportes, T = resumenDe(P, R);
+$('#app').innerHTML = `<div class="top"><img src="${LOGO}" alt="Perelló"><div class="tt"><b>PANEL DE PREVENCIÓN</b><span>${esc(u.nombre)} · ${u.rol === 'admin' ? 'Administrador · todas las plantas' : 'Jefatura · ' + esc(u.suc || 'todas las plantas')}</span></div>
+<span style="font-size:12px;color:#6B7280">Datos al ${esc(D.act || '—')}</span><button class="lnk" id="ref">↻ Actualizar</button><a class="lnk" href="./">Charlas</a><button class="lnk" id="sal">Salir</button></div>
+<div class="wrap"><div class="tabs">${[['resumen', 'Resumen'], ['personas', 'Trabajadores']].concat(D.pendientes ? [['inscripciones', 'Inscripciones', D.pendientes.length]] : []).concat(D.reportes.length ? [['reportes', 'Reportes', T.rep]] : []).concat(D.jefaturas ? [['jefaturas', 'Jefaturas']] : []).map(([k, t, c]) => `<button class="tab${vista === k ? ' on' : ''}" data-v="${k}">${t}${c ? `<span class="ct">${c}</span>` : ''}</button>`).join('')}</div><div id="cont"></div></div>`;
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => { vista = b.dataset.v; pintar(); });
+$('#ref').onclick = cargar; $('#sal').onclick = () => { try { localStorage.removeItem('perello_cap_persona'); localStorage.removeItem('perello_cap_ruta'); localStorage.removeItem('perello_panel_cache'); sessionStorage.removeItem('perello_panel_auth'); } catch (e) {} AUTH = null; login(); };
+({ resumen: vResumen, personas: vPersonas, reportes: vReportes, inscripciones: vInscripciones, jefaturas: vJefaturas })[vista](T);
+}
+function vResumen(T) {
+const P = D.personas, R = D.reportes, sucs = [...new Set(P.map(p => p.s || '(sin planta)'))].sort();
+const k = (t, v, s, c) => `<div class="kpi" style="border-color:${c}"><small>${t}</small><b style="color:${c}">${v}</b><span>${s}</span></div>`;
+let h = `<div class="kpis">${k('Trabajadores', T.n, P.filter(p => p.t === 'Temporero').length + ' temporeros · ' + P.filter(p => p.t !== 'Temporero').length + ' de planta y adm.', '#0F543A')}${k('Cumplimiento a la fecha', fp(T.aFecha), 'charlas que ya debían estar hechas', col(T.aFecha))}
+${k('Avance del programa', fp(T.anual), 'todas las charlas obligatorias', col(T.anual))}${k('Inducción vigente', T.ind + ' / ' + T.n, T.sinInd + ' sin inducción', col(pct(T.ind, T.n)))}
+${k('Curso DS 44', T.ds + ' / ' + T.n, 'con certificado vigente', col(pct(T.ds, T.n)))}${D.reportes.length ? k('Reportes abiertos', T.rep, 'condiciones o acciones inseguras', T.rep ? '#C62828' : '#2E7D32') : ''}</div>`;
+if (D.pendientes && D.pendientes.length) h = `<div class="card" style="border-left:6px solid #FFC20E"><h3>📝 ${D.pendientes.length} INSCRIPCI${D.pendientes.length > 1 ? 'ONES' : 'ÓN'} POR ACEPTAR</h3><button class="btn az" id="verIns">Revisar inscripciones</button></div>` + h;
+h += `<div class="card"><h3>📍 POR PLANTA</h3><table><tr><th>Planta</th><th class="num">Personas</th><th class="num ocm">Sin inducción</th><th>A la fecha</th><th class="ocm">Avance</th><th class="num">Reportes</th></tr>${sucs.map(s => {
+const ps = P.filter(p => (p.s || '(sin planta)') === s), t = resumenDe(ps, R.filter(r => (r.s || '(sin planta)') === s));
+return `<tr><td><button class="lnk" data-suc="${esc(s)}">${esc(s)}</button></td><td class="num">${t.n}</td><td class="num ocm">${t.sinInd ? `<span class="bdg bad">${t.sinInd}</span>` : '<span class="bdg ok">0</span>'}</td>
+<td><span class="pc" style="color:${col(t.aFecha)}">${fp(t.aFecha)}</span>${bar(t.aFecha)}</td><td class="ocm"><span class="pc" style="color:${col(t.anual)}">${fp(t.anual)}</span>${bar(t.anual)}</td><td class="num">${t.rep ? `<span class="bdg warn">${t.rep}</span>` : '0'}</td></tr>`; }).join('')}</table></div>`;
+const top = P.filter(p => p.ind === 'falta' || (p.atr && p.atr.length)).sort((a, b) => (b.atr.length + (b.ind === 'falta' ? 5 : 0)) - (a.atr.length + (a.ind === 'falta' ? 5 : 0))).slice(0, 10);
+h += `<div class="card"><h3>⚠️ REQUIEREN ATENCIÓN</h3>${top.length ? top.map(fila).join('') : '<div class="vacio">Todo al día 🎉</div>'}</div>`;
+$('#cont').innerHTML = h;
+document.querySelectorAll('[data-suc]').forEach(b => b.onclick = () => { fSuc = b.dataset.suc; vista = 'personas'; pintar(); });
+if ($('#verIns')) $('#verIns').onclick = () => { vista = 'inscripciones'; pintar(); };
+enlazarFilas();
+}
+function fila(p) {
+const av = pct(p.ok, p.d), ind = p.ind === 'ok' ? '<span class="bdg ok">Inducción ✔</span>' : p.ind === 'renovar' ? `<span class="bdg warn">Inducción vence ${esc(p.iv)}</span>` : '<span class="bdg bad">Sin inducción</span>';
+return `<div class="per" data-p><div><div class="nm">${esc(p.n)}</div><div class="sb">${bTipo(p.t)} ${esc(p.c)} · ${esc(p.s)}</div>
+<div class="av">${p.ok} de ${p.d} charlas ${bar(av)}</div></div><div class="bd">${ind}<span class="bdg ${p.ds44 ? 'ok' : 'gr'}">DS 44 ${p.ds44 ? '✔' : '—'}</span>
+${p.atr && p.atr.length ? `<span class="bdg bad">${p.atr.length} atrasada${p.atr.length > 1 ? 's' : ''} ▾</span>` : '<span class="bdg ok">Al día</span>'}<span class="bdg gr">${p.pts} pts</span></div>
+${p.atr && p.atr.length ? `<div class="atr">Atrasadas: ${p.atr.map(esc).join(' · ')}</div>` : ''}</div>`;
+}
+const enlazarFilas = () => document.querySelectorAll('[data-p]').forEach(e => e.onclick = () => e.classList.toggle('open'));
+function vPersonas() {
+const sucs = [...new Set(D.personas.map(p => p.s || '(sin planta)'))].sort();
+const F = { todos: () => true, sinind: p => p.ind === 'falta', atr: p => p.atr && p.atr.length, ds: p => !p.ds44, renovar: p => p.ind === 'renovar' };
+const lista = D.personas.filter(F[fPer]).filter(p => !fSuc || (p.s || '(sin planta)') === fSuc).filter(p => !fTipo || (p.t || 'Planta') === fTipo)
+.filter(p => !q || (p.n + ' ' + p.r + ' ' + p.c).toLowerCase().includes(q.toLowerCase())).sort((a, b) => String(a.n).localeCompare(b.n));
+$('#cont').innerHTML = `<div class="card"><div class="filtros">${[['todos', 'Todos'], ['sinind', 'Sin inducción'], ['atr', 'Atrasados'], ['ds', 'DS 44 pendiente'], ['renovar', 'Inducción por vencer']].map(([k, t]) => `<button class="chip${fPer === k ? ' on' : ''}" data-f="${k}">${t}</button>`).join('')}</div>
+<div class="filtros">${TIPOS.map(([k, t]) => `<button class="chip${fTipo === k ? ' on' : ''}" data-ti="${k}">${t}</button>`).join('')}</div>
+<div class="filtros"><input class="buscar" id="q" placeholder="Buscar por nombre, RUT o cargo" value="${esc(q)}">${sucs.length > 1 ? `<select id="suc"><option value="">Todas las plantas</option>${sucs.map(s => `<option${s === fSuc ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select>` : ''}</div>
+<div style="font-size:12px;color:#6B7280;margin-bottom:6px">${lista.length} trabajador${lista.length === 1 ? '' : 'es'} · toca uno para ver sus charlas atrasadas</div>${lista.map(fila).join('') || '<div class="vacio">Nadie en este filtro.</div>'}</div>`;
+document.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { fPer = b.dataset.f; vPersonas(); });
+document.querySelectorAll('[data-ti]').forEach(b => b.onclick = () => { fTipo = b.dataset.ti; vPersonas(); });
+$('#q').oninput = e => { q = e.target.value; clearTimeout(window.__t); window.__t = setTimeout(() => { vPersonas(); const i = $('#q'); i.focus(); i.setSelectionRange(q.length, q.length); }, 250); };
+if ($('#suc')) $('#suc').onchange = e => { fSuc = e.target.value; vPersonas(); };
+enlazarFilas();
+}
+function vReportes() {
+const L = D.reportes.filter(r => fRep === 'todos' || (fRep === 'Abierto' ? r.estado !== 'Resuelto' : r.estado === 'Resuelto'));
+$('#cont').innerHTML = `<div class="filtros">${[['Abierto', 'Abiertos'], ['Resuelto', 'Resueltos'], ['todos', 'Todos']].map(([k, t]) => `<button class="chip${fRep === k ? ' on' : ''}" data-r="${k}">${t}</button>`).join('')}</div>
+<div class="reps">${L.map(r => `<div class="rep ${r.estado !== 'Resuelto' ? 'abierto' : ''}"><div class="im" style="${r.mini ? `background-image:url(data:image/jpeg;base64,${r.mini})` : ''}">${r.mini ? '' : '📝'}</div>
+<div class="bx"><div><span class="bdg ${r.tipo === 'Casi accidente' ? 'bad' : 'warn'}">${esc(r.tipo)}</span> <span class="bdg ${r.estado === 'Resuelto' ? 'ok' : 'gr'}">${esc(r.estado)}</span></div>
+<div class="ds">${esc(r.desc)}</div><div class="mt">📍 ${esc(r.s || '—')}${r.lugar ? ' · ' + esc(r.lugar) : ''}<br>👤 ${esc(r.n)}${r.c ? ' · ' + esc(r.c) : ''}<br>🕒 ${esc(r.f)}</div>
+${r.foto ? `<a href="${esc(r.foto)}" target="_blank" rel="noopener" style="font-size:13px">Ver foto completa</a>` : ''}
+${r.estado === 'Resuelto' ? `<div class="mt">✔ Resuelto por ${esc(r.por)} el ${esc(r.fc)}${r.com ? ': ' + esc(r.com) : ''}</div>`
+: `<textarea rows="2" placeholder="¿Qué se hizo? (opcional)" data-c="${esc(r.id)}"></textarea><button class="btn" data-ok="${esc(r.id)}">Marcar resuelto</button>`}</div></div>`).join('') || '<div class="vacio">No hay reportes en este filtro.</div>'}</div>`;
+document.querySelectorAll('[data-r]').forEach(b => b.onclick = () => { fRep = b.dataset.r; vReportes(); });
+document.querySelectorAll('[data-ok]').forEach(b => b.onclick = () => {
+const id = b.dataset.ok, com = (document.querySelector(`[data-c="${id}"]`) || {}).value || '';
+fetch(URL_API, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ accion: 'reporte_estado', h: AUTH.h, k: AUTH.k, id, estado: 'Resuelto', com }) }).catch(() => {});
+const r = D.reportes.find(x => x.id === id); Object.assign(r, { estado: 'Resuelto', por: D.user.nombre, fc: new Date().toLocaleDateString('es-CL'), com }); pintar(); });
+}
+// Inscripciones nuevas en la nómina: el prevencionista las acepta (ACTIVO) o las rechaza (INACTIVO)
+function vInscripciones() {
+const L = (D.pendientes || []).filter(x => !fIns || (fIns === 'Temporero' ? x.t === 'Temporero' : x.t !== 'Temporero'));
+$('#cont').innerHTML = `<div class="card"><h3>📝 INSCRIPCIONES POR ACEPTAR</h3>
+<div class="filtros">${[['', 'Todas'], ['Planta', '🏭 Planta y administrativos'], ['Temporero', '🍂 Temporeros']].map(([k, t]) => `<button class="chip${fIns === k ? ' on' : ''}" data-fi="${k}">${t} (${(D.pendientes || []).filter(x => !k || (k === 'Temporero' ? x.t === 'Temporero' : x.t !== 'Temporero')).length})</button>`).join('')}</div>
+<p style="margin:0 0 10px;font-size:13px;color:#6B7280">También puede aceptarlas en las hojas <b>Planta</b> y <b>Temporeros</b> de la planilla de respuestas. Personas que llenaron la Ficha de Inscripción y aún no pueden entrar a las charlas. Al aceptar, queda <b>ACTIVO</b> en la nómina y puede ingresar de inmediato con su RUT y su clave.</p>
+${L.map(x => `<div class="per"><div><div class="nm">${esc(x.n)}</div><div class="sb">${bTipo(x.t)} ${esc(x.r)} · ${esc(x.c || 'sin cargo')} · 📍 ${esc(x.s || '')}${x.f ? ' · inscrito el ' + esc(x.f) : ''}</div>${x.a ? `<div class="sb">🧭 ${esc(x.a)}${x.fu && !/^ninguna$/i.test(x.fu) ? ' · 🚦 ' + esc(x.fu) : ''}</div>` : ''}</div>
+<div class="bd"><button class="btn az" data-acep="${esc(x.r)}">✔ Aceptar</button><button class="btn" style="background:#ECEFF1" data-rech="${esc(x.r)}">Rechazar</button></div></div>`).join('') || '<div class="vacio">No hay inscripciones pendientes 🎉</div>'}</div>`;
+const enviar = (rut, estado, b) => { b.disabled = true; b.textContent = 'Guardando…';
+fetch(URL_API, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ accion: 'inscripcion', h: AUTH.h, k: AUTH.k, rut, estado }) })
+.then(() => { D.pendientes = D.pendientes.filter(x => x.r !== rut); pintar(); setTimeout(() => cargar(true), 4000); }).catch(() => { b.disabled = false; b.textContent = 'Reintentar'; }); };
+document.querySelectorAll('[data-fi]').forEach(b => b.onclick = () => { fIns = b.dataset.fi; vInscripciones(); });
+document.querySelectorAll('[data-acep]').forEach(b => b.onclick = () => enviar(b.dataset.acep, 'ACTIVO', b));
+document.querySelectorAll('[data-rech]').forEach(b => b.onclick = () => { if (confirm('¿Rechazar esta inscripción? Quedará INACTIVO en la nómina.')) enviar(b.dataset.rech, 'INACTIVO', b); });
+}
+
+// Jefaturas del panel: las administran Daniel y Grace. Cada jefatura entra con su RUT y su clave de capacitaciones y ve su planta (o todas).
+function vJefaturas() {
+const J = D.jefaturas || [], N = D.nominaLite || [], sedes = D.sedes || [];
+const ya = new Set(J.map(j => cleanRut(j.r))), res = qJ.trim().length >= 2 ? N.filter(p => !ya.has(cleanRut(p.r)) && (p.n + ' ' + p.r + ' ' + p.c).toLowerCase().includes(qJ.toLowerCase())).slice(0, 8) : [];
+const selSuc = (v, id) => `<select data-suc-de="${esc(id)}"><option value="">Todas las plantas</option>${sedes.map(s => `<option${s === v ? ' selected' : ''}>${esc(s)}</option>`).join('')}</select>`;
+$('#cont').innerHTML = `<div class="card"><h3>👥 JEFATURAS Y ADMINISTRADORES</h3>
+<p style="margin:0 0 10px;font-size:13px;color:#6B7280">Las jefaturas entran a este panel con su RUT y su misma clave de capacitaciones. Una jefatura ve solo la planta que se le asigne; un administrador ve todo y acepta inscripciones.</p>
+${J.map(j => `<div class="per" style="${j.act ? '' : 'opacity:.55'}"><div><div class="nm">${esc(j.n)}</div><div class="sb">${esc(j.r)} · ${j.rol === 'Administrador' ? '⭐ Administrador' : 'Jefatura · ' + esc(j.suc || 'todas las plantas')}</div></div>
+<div class="bd">${j.rol === 'Administrador' ? '' : selSuc(j.suc, j.r)}<button class="btn" style="background:#ECEFF1" data-tog="${esc(j.r)}">${j.act ? 'Desactivar' : 'Activar'}</button></div></div>`).join('') || '<div class="vacio">Aún no hay jefaturas.</div>'}</div>
+<div class="card"><h3>➕ AGREGAR JEFATURA</h3><div class="filtros"><input class="buscar" id="qJ" placeholder="Busque por nombre, RUT o cargo (debe estar en la nómina)" value="${esc(qJ)}"></div>
+${res.map(p => `<div class="per"><div><div class="nm">${esc(p.n)}</div><div class="sb">${esc(p.r)} · ${esc(p.c)} · ${esc(p.s)}</div></div><div class="bd">${selSuc('', 'n' + p.r)}
+<button class="btn az" data-addj="${esc(p.r)}">Jefatura</button><button class="btn" data-adda="${esc(p.r)}">Administrador</button></div></div>`).join('') || (qJ.trim().length >= 2 ? '<div class="vacio">No se encontró en la nómina activa.</div>' : '')}</div>`;
+const guardar = (rut, rol, suc, activo, b) => { if (b) { b.disabled = true; b.textContent = 'Guardando…'; }
+fetch(URL_API, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ accion: 'usuario', h: AUTH.h, k: AUTH.k, rut, rol, suc, activo }) })
+.then(() => { const p = N.find(x => cleanRut(x.r) === cleanRut(rut)), j = J.find(x => cleanRut(x.r) === cleanRut(rut));
+if (j) Object.assign(j, { rol, suc, act: activo }); else J.push({ n: p ? p.n : rut, r: rut, rol, suc, act: activo }); D.jefaturas = J; qJ = ''; vJefaturas(); setTimeout(() => cargar(true), 5000); })
+.catch(() => { if (b) { b.disabled = false; b.textContent = 'Reintentar'; } }); };
+const sucDe = id => { const e = document.querySelector(`[data-suc-de="${id}"]`); return e ? e.value : ''; };
+document.querySelectorAll('[data-tog]').forEach(b => b.onclick = () => { const j = J.find(x => x.r === b.dataset.tog); guardar(j.r, j.rol, j.suc, !j.act, b); });
+document.querySelectorAll('[data-suc-de]').forEach(e => { if (/^n/.test(e.dataset.sucDe)) return; e.onchange = () => { const j = J.find(x => x.r === e.dataset.sucDe); guardar(j.r, j.rol, e.value, j.act); }; });
+document.querySelectorAll('[data-addj]').forEach(b => b.onclick = () => guardar(b.dataset.addj, 'Jefatura', sucDe('n' + b.dataset.addj), true, b));
+document.querySelectorAll('[data-adda]').forEach(b => b.onclick = () => guardar(b.dataset.adda, 'Administrador', '', true, b));
+$('#qJ').oninput = e => { qJ = e.target.value; clearTimeout(window.__tj); window.__tj = setTimeout(() => { vJefaturas(); const i = $('#qJ'); i.focus(); i.setSelectionRange(qJ.length, qJ.length); }, 250); };
+}
+// Inicio rápido: muestra los últimos datos guardados de esta misma persona y actualiza en segundo plano
+(async function () { if (!AUTH) return login(); AUTH.h = await rutHash(AUTH.rut); let pre = null;
+try { pre = JSON.parse(localStorage.getItem('perello_panel_cache') || 'null'); } catch (e) {}
+if (pre && pre.ok && pre._rut === AUTH.rut) { D = pre; pintar(); cargar(true); } else cargar(); })();
+</script></body></html>
