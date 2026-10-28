@@ -4,6 +4,8 @@
 // 2) Grúa horquilla con baliza encendida, alarma de retroceso y el nombre de la empresa.
 // 3) Evaluación: marcar no corrige al tiro; se puede cambiar la respuesta y se revisa al tocar el botón.
 // 4) Imágenes de las preguntas más chicas: en las de elegir imagen, ambas caben en la pantalla.
+// 5) Dibujos más vivos: ✓/✗ que laten y logo de la empresa en los camiones.
+// Se carga desde https://danielzunino.github.io/capacitaciones-perello/mejoras_comunes.js en todos los portales.
 (function () {
   const M = window.MARCA || {};
   // ---------- 1) Pronunciación chilena de siglas
@@ -73,6 +75,27 @@
         if (!st.revisada) { if (!st.sel) return; st.revisada = true; revelar(st.sel.btn, st.sel.ok); return; }
         return N0.call(this, ev);
       };
+    }
+  } catch (e) {}
+
+  // ---------- 5) Dibujos más vivos y corporativos (todos los portales)
+  try {
+    if (typeof S === 'object' && !S.__mj) {
+      const css = document.createElement('style');
+      css.textContent = '.mjPop{animation:mjPop 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}@keyframes mjPop{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}'
+        + '.mjInter{animation:mjInter 1.2s steps(2) infinite}@keyframes mjInter{50%{opacity:.15}}';
+      document.head.appendChild(css);
+      const logoCortina = w => `<rect width="${w}" height="26" rx="6" fill="${M.c2 || '#FFC20E'}"/><rect x="2.5" y="2.5" width="${w - 5}" height="21" rx="4.5" fill="#fff"/><rect x="4.5" y="4.5" width="${w - 9}" height="17" rx="3.5" fill="${M.c1 || '#263238'}"/><text x="${w / 2}" y="18" font-size="13" font-weight="bold" text-anchor="middle" fill="#fff" font-family="${M.fuente || 'Arial'}">${M.nombre}</text>`;
+      const mejorar = svg => {
+        if (typeof svg !== 'string') return svg;
+        // ✓ y ✗ que laten
+        svg = svg.replace(/(<circle cx="[\d.]+" cy="[\d.]+" r="[\d.]+" fill="(?:#2E7D32|#D7262B)" stroke="#fff" stroke-width="3"\/>)(<path [^>]*\/>)/g, '<g class="mjPop">$1$2</g>');
+        // logo de la empresa en la cortina de los camiones
+        if (M.nombre && svg.indexOf('>' + M.nombre + '</text>') < 0) svg = svg.replace(/<rect x="5" y="-104" width="([\d.]+)" height="58" fill="#123F8C"\/>/g, (m, w) => { const L = +w + 11, ww = Math.min(L - 30, 84); return m + `<g transform="translate(${(L / 2 - ww / 2).toFixed(1)},-99)">${logoCortina(ww)}</g><g class="mjInter"><rect x="-4" y="-50" width="5" height="5" rx="1" fill="#FFB300"/></g>`; });
+        return svg;
+      };
+      Object.keys(S).forEach(k => { const f = S[k]; if (typeof f !== 'function') return; S[k] = function () { return mejorar(f.apply(this, arguments)); }; });
+      Object.defineProperty(S, '__mj', { value: true });
     }
   } catch (e) {}
 })();
