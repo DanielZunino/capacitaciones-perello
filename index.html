@@ -7475,6 +7475,26 @@ const razonTxt = r => RAZONES[r] ? r + ' (RUT ' + RAZONES[r] + ')' : (r && !/^re
   { const t = T_('induccion'); const tm = t && t.learn.find(l => /TMERT/.test(l.t)); if (tm) tm.s = 'pe_seleccion'; }
   L('cortes', 3, { s: 'pe_cuchillo_guarda', x: 'Un cuchillo sin filo obliga a hacer más fuerza y se resbala: pide que lo afilen. Cuando no lo uses, <b>guárdalo con su protección</b>: en su funda o en el porta cuchillos. Nunca suelto entre la fruta, en el bolsillo ni bajo el agua de un lavadero.', k: 'Afilado y guardado en su funda.' });
   L('caldera_general', 2, { s: 'pe_fuga_vapor' }); L('calor_vapor', 3, { s: 'pe_fuga_vapor' }); Q('calor_vapor', 3, { s: 'pe_fuga_vapor' }); L('orden', 5, { s: 'orden_scraps' }); Q('caldera_general', 1, { s: 'pe_fuga_vapor' });
+  // ---------- Emergencias en 2 láminas (sin repetir ACHS en cada tarjeta)
+  TOPICS.forEach(walk); TOPICS.forEach(t => { const fx = o => { if (Array.isArray(o)) return o.map(fx); if (o && typeof o === 'object') { Object.keys(o).forEach(k => o[k] = fx(o[k])); return o; } return typeof o === 'string' ? o.replace(/\b(tu|mi) ACHS\b/g, 'la ACHS') : o; }; fx(t); });
+  (function () {
+    const t = T_('induccion'); if (!t) return;
+    const by = s => t.learn.find(l => l.t === s);
+    const ley = by('Ley 16.744: el seguro laboral'); if (ley) ley.x = 'Todos los trabajadores, también los temporeros, están cubiertos por el seguro de la Ley 16.744 ante accidentes del trabajo, accidentes de trayecto y enfermedades profesionales.';
+    const a = by('Si a pesar de todo ocurre un accidente'), g = by('Accidente grave o fatal');
+    if (a) Object.assign(a, { t: 'Si ocurre un accidente', s: 'accidente_companero', x: ul(['<b>Leve:</b> avisa de inmediato a tu jefatura, aunque parezca poco.', '<b>Grave o fatal:</b> llama al <b>1404</b> (emergencias ACHS), no muevas a la persona salvo que siga en peligro, detén la faena y delimita el área.', 'Avisa a la jefatura y a prevención.']), k: 'Aviso inmediato. Grave: 1404.' });
+    if (g) t.learn.splice(t.learn.indexOf(g), 1);
+    const n = by('Números de emergencia: apréndelos'); if (n) n.x = 'Todos debemos saberlos de memoria, sin buscarlos en el celular:' + ul(['<b>1404</b> · ACHS: accidente del trabajo', '<b>131</b> · SAMU (ambulancia)', '<b>132</b> · Bomberos', '<b>133</b> · Carabineros', '<b>134</b> · PDI']) + 'Al llamar: dirección exacta, qué pasó y cuántos lesionados hay.';
+    const c = by('Tu compromiso: autocuidado'); if (c) c.x = c.x.replace(/<br><b>1404[^<]*<\/b>/, '');
+  })();
+  (function () {
+    const t = T_('accidente'); if (!t) return;
+    const d = t.learn.findIndex(l => l.s === 'accidente_donde'); if (d >= 0) t.learn.splice(d, 1);
+    const a = t.learn.find(l => l.s === 'accidente_avisa'); if (a) a.x = 'Avisa <b>de inmediato</b> a tu jefatura, aunque parezca leve. La empresa hace la denuncia (DIAT) y te deriva a la ACHS. Si es grave: <b>1404</b>. La causa se investiga para que no se repita.';
+    const c = t.learn.find(l => l.s === 'accidente_companero'); if (c) c.x = c.x.replace(/Llama al 1404 \(ACHS\) o al 131 y avisa a la jefatura\./, 'Pide ayuda (1404) y avisa a la jefatura.');
+    t.quiz = t.quiz.filter(q => !/Cuál es su número de emergencias/.test(q.q));
+  })();
+  (function () { const t = T_('emergencias'); if (t) t.quiz = t.quiz.filter(q => !/Somos de la ACHS: ¿a qué número/.test(q.q)); })();
   // ---------- textos de dibujos heredados de otras plataformas
   const fxS = s => s.replace(/FERRETERÍA/g, 'PERELLÓ').replace(/Casco \(en obra\)/g, 'Casco (si se exige)').replace(/Perfiles de acero/g, 'Canto vivo').replace(/IARC Grupo 1/g, '').replace(/Rebajadora/g, '').replace(/Mutualidad o ISL/g, 'ACHS').replace(/Organismo admin\./g, 'ACHS');
   Object.keys(S).forEach(k => { const f = S[k]; S[k] = function () { return fxS(f.apply(this, arguments)); }; });
