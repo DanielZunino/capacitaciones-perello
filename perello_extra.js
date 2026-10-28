@@ -60,4 +60,11 @@
       if (!mq.learn.some(l => l.s === 'pe_mosq_vest')) mq.learn.splice(1, 0, { s: 'pe_mosq_vest', t: 'Tu vestimenta en deshidratado', x: 'Cotona y gorro Perelló con cofia. Los guantes según la labor:<ul><li><b>Cabritilla</b>: hornos y carros calientes.</li><li><b>Multiflex</b>: selección y embandejado.</li></ul>Mascarilla y lentes cuando haya pelusa.', k: 'Cada labor, su guante.' });
       if (!mq.quiz.some(q => /cabritilla/.test(q.q + (q.o || []).join()))) mq.quiz.push({ q: 'Vas a sacar un carro del horno de secado. ¿Qué guantes usas?', s: 'pe_mosq_vest', o: ['Guantes de cabritilla', 'Guantes multiflex', 'Sin guantes'], a: 0, w: 'Para hornos y carros calientes: cabritilla.' }); }
   } catch (e) {}
+
+  // 5) Tipo de trabajador igual que en la ficha: "Personal de Planta" (incluye oficina) o "Personal de Temporada"
+  try {
+    if (typeof PE_TIPOS === 'object' && !PE_TIPOS.some(t => t.k === 'Personal de Planta')) PE_TIPOS.splice(0, PE_TIPOS.length,
+      { k: 'Personal de Planta', t: 'Personal de Planta', d: 'Contrato todo el año (incluye oficina)', ic: '🏭' },
+      { k: 'Personal de Temporada', t: 'Personal de Temporada', d: 'Contrato solo por la temporada', ic: '🍂' });
+  } catch (e) {}
 })();
