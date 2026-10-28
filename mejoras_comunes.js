@@ -5,6 +5,7 @@
 // 3) Evaluación: marcar no corrige al tiro; se puede cambiar la respuesta y se revisa al tocar el botón.
 // 4) Imágenes de las preguntas más chicas: en las de elegir imagen, ambas caben en la pantalla.
 // 5) Dibujos más vivos: ✓/✗ que laten y logo de la empresa en los camiones.
+// 6) Láminas: al volver atrás, botón para regresar de inmediato a la lámina donde iba (las ya vistas no esperan de nuevo).
 // Se carga desde https://danielzunino.github.io/capacitaciones-perello/mejoras_comunes.js en todos los portales.
 (function () {
   const M = window.MARCA || {};
@@ -96,6 +97,31 @@
       };
       Object.keys(S).forEach(k => { const f = S[k]; if (typeof f !== 'function') return; S[k] = function () { return mejorar(f.apply(this, arguments)); }; });
       Object.defineProperty(S, '__mj', { value: true });
+    }
+  } catch (e) {}
+
+  // ---------- 6) Láminas: volver atrás y regresar rápido a donde iba (sin volver a esperar el tiempo mínimo)
+  try {
+    if (typeof renderLearn === 'function' && !renderLearn.__mj) {
+      const RL = renderLearn, TM = typeof tiempoMinimo === 'function' ? tiempoMinimo : null;
+      renderLearn = function () {
+        const id = st.topic && st.topic.id;
+        if (st.__mxT !== id) { st.__mxT = id; st.__mx = 0; st.__done = -1; st.__last = -1; }
+        if (st.li === st.__last + 1 && st.__last >= 0) st.__done = Math.max(st.__done, st.__last);   // avanzó: la anterior quedó vista
+        st.__last = st.li; if (st.li > st.__mx) st.__mx = st.li;
+        RL.apply(this, arguments);
+        const nx = document.getElementById('lNext'), row = nx && nx.parentNode; if (!row) return;
+        let b = document.getElementById('mjVolver');
+        if (!b) { b = document.createElement('button'); b.id = 'mjVolver'; b.className = 'btn'; b.style.cssText = 'margin-top:10px;width:100%;background:#1E88E5;color:#fff;border:none';
+          row.parentNode.insertBefore(b, row.nextSibling);
+          b.onclick = () => { try { SFX.play('next'); VOZ.stop(); } catch (e) {} st.li = st.__mx; renderLearn(); }; }
+        if (st.li < st.__mx) { b.style.display = 'block'; b.textContent = '⏩ Volver a donde iba (lámina ' + (st.__mx + 1) + ' de ' + st.topic.learn.length + ')'; } else b.style.display = 'none';
+      };
+      renderLearn.__mj = true;
+      if (TM) tiempoMinimo = function (card) {
+        if (st.li <= st.__done) { try { clearInterval(_minT); } catch (e) {} const b = document.getElementById('lNext'); if (b) b.disabled = false; return; }
+        return TM.apply(this, arguments);
+      };
     }
   } catch (e) {}
 })();
