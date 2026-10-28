@@ -35,4 +35,29 @@
       keys.forEach(k => { const f = S[k]; if (typeof f !== 'function') return; S[k] = function () { window.__peMant = true; try { return f.apply(this, arguments); } finally { window.__peMant = false; } }; });
     }
   } catch (e) {}
+
+  // 4) Deshidratado de mosqueta: cotona, gorro Perelló con cofia y guantes de cabritilla (hornos y carros) o multiflex (selección y embandejado)
+  try {
+    if (!window.__peMosqOk) {
+      window.__peMosqOk = true;
+      const COTONA = '#1565C0', CAB = '#C8A27A', MULTI = '#546E7A';
+      const W2b = W;
+      W = function (x, y, o) { o = Object.assign({}, o || {}); const m = window.__peMosq; if (m) { o.shirt = COTONA; o.apron = false; o.helmet = false; o.cofia = true; o.mask = m.mask ? true : false; if (o.gloves !== false) o.gloves = m.g === 'cab' ? CAB : MULTI; } return W2b(x, y, o); };
+      W.__pe = true;
+      const M = { pe_horno: { g: 'cab' }, pe_carro: { g: 'cab' }, pe_seleccion: { g: 'multi' }, pe_embandejado: { g: 'multi' }, pe_embandejado_patio: { g: 'multi' }, pe_descarga: { g: 'multi' }, pe_pelusa: { g: 'multi', mask: true }, enfermedades_polvo: { g: 'multi', mask: true } };
+      Object.keys(M).forEach(k => { const f = S[k]; if (typeof f !== 'function') return; S[k] = function () { window.__peMosq = M[k]; try { return f.apply(this, arguments); } finally { window.__peMosq = null; } }; });
+      const T = (x, y, t, z, c) => `<text x="${x}" y="${y}" font-size="${z || 11}" font-weight="bold" text-anchor="middle" fill="${c || '#263238'}" font-family="Arial">${t}</text>`;
+      S.pe_mosq_vest = function () { window.__peMosq = { g: 'cab' }; let a; try { a = W(85, 170, { s: 1.3 }); } finally { window.__peMosq = null; } window.__peMosq = { g: 'multi' }; let b; try { b = W(235, 170, { s: 1.3, flip: true }); } finally { window.__peMosq = null; }
+        return `<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="200" fill="#ECEFF1"/><rect y="165" width="320" height="35" fill="#B0BEC5"/>` + a + b + T(85, 28, 'Hornos y carros', 12, '#6D4C41') + T(85, 44, 'guantes de cabritilla', 11, '#6D4C41') + T(235, 28, 'Selección y embandejado', 12, '#37474F') + T(235, 44, 'guantes multiflex', 11, '#37474F') + T(160, 192, 'Cotona y gorro Perelló con cofia', 12, '#0F543A') + '</svg>'; };
+    }
+    const fx = (t, a, b) => { if (t && typeof t.x === 'string') t.x = t.x.replace(a, b); };
+    const ind = TOPICS.find(t => t.id === 'induccion');
+    if (ind) ind.learn.forEach(l => fx(l, 'guantes para calor, empujar los carros', 'cotona y guantes de cabritilla o multiflex según la labor, empujar los carros'));
+    const epp = TOPICS.find(t => t.id === 'epp');
+    if (epp) epp.learn.forEach(l => { if (/Cada área, su EPP/.test(l.t) && !/Deshidratado de mosqueta/.test(l.x)) { l.x = l.x.replace('<li><b>Aseo y sanitización:</b>', '<li><b>Deshidratado de mosqueta:</b> cotona, gorro con cofia y guantes de cabritilla (hornos y carros) o multiflex (selección y embandejado).</li><li><b>Aseo y sanitización:</b>').replace('Caldera, autoclaves y hornos:', 'Caldera y autoclaves:'); } });
+    const mq = TOPICS.find(t => t.id === 'mosqueta');
+    if (mq) { mq.learn.forEach(l => fx(l, 'usa guantes para calor', 'usa guantes de cabritilla'));
+      if (!mq.learn.some(l => l.s === 'pe_mosq_vest')) mq.learn.splice(1, 0, { s: 'pe_mosq_vest', t: 'Tu vestimenta en deshidratado', x: 'Cotona y gorro Perelló con cofia. Los guantes según la labor:<ul><li><b>Cabritilla</b>: hornos y carros calientes.</li><li><b>Multiflex</b>: selección y embandejado.</li></ul>Mascarilla y lentes cuando haya pelusa.', k: 'Cada labor, su guante.' });
+      if (!mq.quiz.some(q => /cabritilla/.test(q.q + (q.o || []).join()))) mq.quiz.push({ q: 'Vas a sacar un carro del horno de secado. ¿Qué guantes usas?', s: 'pe_mosq_vest', o: ['Guantes de cabritilla', 'Guantes multiflex', 'Sin guantes'], a: 0, w: 'Para hornos y carros calientes: cabritilla.' }); }
+  } catch (e) {}
 })();
