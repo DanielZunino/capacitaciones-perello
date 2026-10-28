@@ -1162,7 +1162,7 @@ function RAMPLA(L, o) {
     g += `<rect x="${L - 31}" y="-104" width="25" height="58" fill="${CORT}"/>${f}`;
   } else {
     g += `<rect x="5" y="-104" width="${L - 11}" height="58" fill="${CORT}"/><rect x="5" y="-104" width="${L - 11}" height="5" fill="#0A2A66" opacity=".5"/>`
-      + `<rect x="5" y="-66" width="${L - 11}" height="4" fill="${RO}"/>`;
+      + `<rect x="5" y="-66" width="${L - 11}" height="4" fill="${RO}"/>` + (window.MARCA ? (w => `<g transform="translate(${n(L / 2 - w / 2)},-99)"><rect width="${w}" height="26" rx="6" fill="${MARCA.c2}"/><rect x="2.5" y="2.5" width="${w - 5}" height="21" rx="4.5" fill="#fff"/><rect x="4.5" y="4.5" width="${w - 9}" height="17" rx="3.5" fill="${MARCA.c1}"/><text x="${w / 2}" y="18" font-size="13" font-weight="bold" text-anchor="middle" fill="#fff" font-family="${MARCA.fuente}">${MARCA.nombre}</text></g>`)(Math.min(L - 30, 84)) : '');
     for (let i = 1; i * 15 < L - 12; i++) g += `<line x1="${5 + i * 15}" y1="-99" x2="${5 + i * 15}" y2="-48" stroke="#2A5BB0" stroke-width="1.2"/><rect x="${3.5 + i * 15}" y="-52" width="3" height="5" fill="#CFD8DC"/>`;
   }
   g += `<rect x="-3" y="-45" width="4" height="9" fill="${o.brake ? '#FF1744' : '#C62828'}"/>`;
@@ -6601,6 +6601,8 @@ W = (function (W0) { return function (x, y, o) { o = Object.assign({}, o || {});
     .peResb { animation:peResb 3s ease-in infinite; transform-box:fill-box; transform-origin:50% 100%; } @keyframes peResb { 0%,40% { transform:rotate(0); } 70%,100% { transform:translate(10px,6px) rotate(-62deg); } }
     .peNieve { animation:peNieve 3s linear infinite; } @keyframes peNieve { from { transform:translateY(-10px); opacity:0; } 20% { opacity:1; } to { transform:translateY(40px); opacity:0; } }
     .peBarr { animation:peBarr 3.4s ease-in-out infinite; transform-box:fill-box; transform-origin:0% 50%; } @keyframes peBarr { 0%,30% { transform:rotate(0); } 50%,80% { transform:rotate(-70deg); } 100% { transform:rotate(0); } }
+    .peCorte { animation:peCorte 1.6s ease-in-out infinite; } @keyframes peCorte { 0%,15% { transform:translateX(0); } 55%,70% { transform:translateX(16px); } 100% { transform:translateX(0); } }
+    .peFunda { animation:peFunda 2.6s ease-in-out infinite; } @keyframes peFunda { 0%,20% { transform:translate(0,-26px); } 60%,100% { transform:translate(0,0); } }
     .peAuto { animation:peAuto 3.4s ease-in-out infinite; } @keyframes peAuto { 0%,45% { transform:translateX(0); } 85%,100% { transform:translateX(120px); } }
   </style>`;
   const T = (x, y, s, z = 12, c = '#263238') => txt(x, y, s, z, c);
@@ -6609,11 +6611,12 @@ W = (function (W0) { return function (x, y, o) { o = Object.assign({}, o || {});
   // cinta transportadora con latas que avanzan
   const cinta = (x, y, w, o = {}) => { let g = `<rect x="${x}" y="${y - 6}" width="${w}" height="10" rx="5" fill="#455A64"/><rect x="${x + 6}" y="${y + 4}" width="6" height="${150 - y + 10 > 0 ? 160 - y - 4 : 20}" fill="#607D8B"/><rect x="${x + w - 12}" y="${y + 4}" width="6" height="${160 - y - 4}" fill="#607D8B"/>`;
     for (let i = 0; i < w; i += 14) g += `<circle cx="${x + 5 + i}" cy="${y - 1}" r="3" fill="#90A4AE"/>`;
-    let l = ''; for (let i = -30; i < w - 14; i += 30) l += o.mosqueta ? mosq(x + i + 10, y - 9) : lata(x + i + 4, y - 6, o.c);
+    let l = ''; for (let i = -30; i < w - 14; i += 30) l += o.mosqueta ? mosq(x + i + 10, y - 9) : ((i / 30) % 2 ? frasco(x + i + 4, y - 6) : lata(x + i + 4, y - 6, o.c));
     g += `<clipPath id="clc${x}${y}"><rect x="${x}" y="${y - 40}" width="${w}" height="36"/></clipPath><g clip-path="url(#clc${x}${y})"><g class="peCinta">${l}</g></g>`;
     if (o.guard) g += `<rect x="${x + w / 2 - 22}" y="${y - 30}" width="44" height="24" rx="3" fill="#FFB300" fill-opacity=".55" stroke="#E65100" stroke-width="2"/>`;
     if (o.stop) g += `<rect x="${x + w - 4}" y="${y - 34}" width="16" height="16" rx="3" fill="#FFC20E" stroke="#555"/><circle cx="${x + w + 4}" cy="${y - 26}" r="5.5" fill="#D32F2F"/>`;
     return g; };
+  const frasco = (x, y) => `<rect x="${x}" y="${y - 18}" width="12" height="18" rx="3" fill="#FFB74D" fill-opacity=".85" stroke="#90A4AE"/><rect x="${x + 1}" y="${y - 21}" width="10" height="4" rx="1" fill="#C62828"/><rect x="${x + 2}" y="${y - 15}" width="3" height="10" fill="#fff" opacity=".5"/>`;
   const mosq = (x, y) => `<ellipse cx="${x}" cy="${y}" rx="5" ry="6" fill="#D84315" stroke="#8D2B0B"/><ellipse cx="${x + 9}" cy="${y + 1}" rx="5" ry="6" fill="#E64A19" stroke="#8D2B0B"/><path d="M${x - 2},${y - 6} l2,-3 l2,3" stroke="#33691E" stroke-width="1.5" fill="none"/>`;
   const vapor = (x, y, n = 3) => { let g = ''; for (let i = 0; i < n; i++) g += `<path class="peVap" style="animation-delay:-${i * .6}s" d="M${x + i * 10},${y} q-6,-8 0,-16 q6,-8 0,-16" stroke="#B0BEC5" stroke-width="4" fill="none" stroke-linecap="round"/>`; return g; };
   // Autoclave vertical (como los de la planta): cilindro de pie, tapa arriba con pernos, manómetro y cañería de vapor
@@ -6638,7 +6641,7 @@ W = (function (W0) { return function (x, y, o) { o = Object.assign({}, o || {});
   const camara = (x, y, abierta) => `<rect x="${x}" y="${y - 130}" width="120" height="130" fill="#E3F2FD" stroke="#90A4AE" stroke-width="3"/>`
     + (abierta ? `<rect x="${x + 6}" y="${y - 122}" width="60" height="122" fill="#0D47A1" opacity=".25"/><rect x="${x + 66}" y="${y - 122}" width="12" height="122" fill="#CFD8DC" stroke="#90A4AE"/>` : `<rect x="${x + 6}" y="${y - 122}" width="108" height="122" fill="#ECEFF1" stroke="#B0BEC5"/><rect x="${x + 96}" y="${y - 70}" width="8" height="30" rx="3" fill="#455A64"/>`)
     + `<g fill="#64B5F6">${[0, 1, 2].map(i => `<text class="peNieve" style="animation-delay:-${i}s" x="${x + 20 + i * 30}" y="${y - 100}" font-size="16">❄</text>`).join('')}</g>${T(x + 60, y - 136, '-18 °C', 12, '#1565C0')}`;
-  const camion = (x, y, c = '#1565C0') => `<rect x="${x}" y="${y - 70}" width="120" height="52" rx="3" fill="#ECEFF1" stroke="#90A4AE" stroke-width="2"/><path d="M${x + 122},${y - 18} v-38 h28 l16,20 v18z" fill="${c}" stroke="#0D2C5A" stroke-width="1.5"/><path d="M${x + 128},${y - 52} h18 l11,14 h-29z" fill="#B3E5FC"/><rect x="${x}" y="${y - 20}" width="166" height="6" fill="#37474F"/>${[x + 22, x + 50, x + 140].map(cx => `<circle cx="${cx}" cy="${y - 8}" r="10" fill="#263238"/><circle cx="${cx}" cy="${y - 8}" r="4" fill="#90A4AE"/>`).join('')}`;
+  const camion = (x, y, c = '#1565C0') => `<rect x="${x}" y="${y - 70}" width="120" height="52" rx="3" fill="#ECEFF1" stroke="#90A4AE" stroke-width="2"/><path d="M${x + 122},${y - 18} v-38 h28 l16,20 v18z" fill="${c}" stroke="#0D2C5A" stroke-width="1.5"/><path d="M${x + 128},${y - 52} h18 l11,14 h-29z" fill="#B3E5FC"/><rect x="${x}" y="${y - 20}" width="166" height="6" fill="#37474F"/><rect x="${x + 18}" y="${y - 58}" width="84" height="26" rx="6" fill="#8C7548"/><rect x="${x + 21}" y="${y - 55}" width="78" height="20" rx="4" fill="#0F543A" stroke="#fff" stroke-width="1.5"/><text x="${x + 60}" y="${y - 40}" font-size="13" font-weight="bold" text-anchor="middle" fill="#fff" font-family="Georgia, serif">Perelló</text>${[x + 22, x + 50, x + 140].map(cx => `<circle cx="${cx}" cy="${y - 8}" r="10" fill="#263238"/><circle cx="${cx}" cy="${y - 8}" r="4" fill="#90A4AE"/>`).join('')}`;
   const auto = (x, y, c = '#C62828') => `<path d="M${x},${y - 12} v-14 q0,-6 6,-8 l14,-4 l12,-14 h34 l14,14 h10 q8,0 8,8 v18z" fill="${c}" stroke="#3E0B0B" stroke-width="1.2"/><path d="M${x + 36},${y - 36} l9,-11 h24 l10,11z" fill="#B3E5FC"/><rect x="${x + 96}" y="${y - 28}" width="6" height="5" fill="#FFF59D"/>${[x + 20, x + 76].map(cx => `<circle cx="${cx}" cy="${y - 10}" r="9" fill="#263238"/><circle cx="${cx}" cy="${y - 10}" r="3.5" fill="#B0BEC5"/>`).join('')}`;
   const caseta = (x, y) => `<rect x="${x}" y="${y - 90}" width="70" height="90" fill="#ECEFF1" stroke="#90A4AE" stroke-width="2"/><rect x="${x - 6}" y="${y - 98}" width="82" height="10" fill="#0F543A"/><rect x="${x + 10}" y="${y - 70}" width="50" height="30" fill="#B3E5FC" stroke="#90A4AE"/>${T(x + 35, y - 76, 'PORTERÍA', 9, '#fff')}`;
   const barrera = (x, y, anim) => `<rect x="${x}" y="${y - 40}" width="14" height="40" fill="#455A64"/><g class="${anim ? 'peBarr' : ''}"><rect x="${x + 7}" y="${y - 38}" width="130" height="7" fill="#fff" stroke="#C62828"/>${[0, 1, 2, 3].map(i => `<rect x="${x + 20 + i * 30}" y="${y - 38}" width="14" height="7" fill="#C62828"/>`).join('')}</g>`;
@@ -6783,6 +6786,18 @@ W = (function (W0) { return function (x, y, o) { o = Object.assign({}, o || {});
     epp_cert: () => P(guanteMalla(40, 140) + `<rect x="110" y="100" width="40" height="60" rx="4" fill="#FAFAFA" stroke="#90A4AE" stroke-width="2"/><rect x="104" y="150" width="52" height="12" rx="4" fill="#FAFAFA" stroke="#90A4AE" stroke-width="2"/><path d="M176,110 h30 v12 q-15,10 -30,0z" fill="#ECEFF1" stroke="#78909C" stroke-width="2"/>` + `<circle cx="270" cy="80" r="30" fill="#2E7D32" stroke="#1B5E20" stroke-width="3"/><path d="M256,80 l10,10 l18,-20" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M252,104 l-8,30 l14,-8 l8,14 l6,-30z M288,104 l8,30 l-14,-8 l-8,14 l-6,-30z" fill="#2E7D32"/>` + T(270, 160, 'EPP certificado', 12, '#1B5E20') + T(270, 176, 'DS 18/1982', 10)),
     epp_care: () => P(`<rect x="20" y="40" width="120" height="125" rx="4" fill="#CFD8DC" stroke="#78909C" stroke-width="2"/><rect x="26" y="96" width="108" height="4" fill="#78909C"/>` + `<path d="M40,90 q15,-26 30,0z" fill="#fff" stroke="#90A4AE"/><path d="M84,70 h34 v18 h-34z" fill="#fff" stroke="#90A4AE"/>${T(80, 120, 'Limpio, seco', 10)}${T(80, 134, 'y en su lugar', 10)}` + `<rect x="40" y="140" width="18" height="24" fill="#FAFAFA" stroke="#90A4AE"/><rect x="64" y="140" width="18" height="24" fill="#FAFAFA" stroke="#90A4AE"/>` + W2(250, 165, { flip: true }) + bubble(150, 20, 'La mascarilla es personal', 165)),
     pe_fuga_vapor: () => P(`<rect x="0" y="70" width="190" height="14" fill="#90A4AE" stroke="#546E7A"/><rect x="120" y="66" width="14" height="22" fill="#78909C"/>` + `<g class="peLat"><path d="M134,78 q30,-6 50,-30 q-10,24 4,34 q-26,-2 -54,-4z" fill="#ECEFF1" opacity=".9"/></g>` + vapor(150, 60) + W2(250, 165, { pose: 'stop', flip: true }) + bubble(176, 20, '¡Fuga de vapor: aviso!', 140) + T(80, 40, 'Cañería de vapor', 12)),
+  });
+
+  // Cuchillo proporcional a la persona (hoja ~22 px) con animación de uso y de guardado en su funda
+  const cuchi = (x, y, r = 0) => `<g transform="translate(${x},${y}) rotate(${r})"><rect x="-13" y="-2.5" width="13" height="5" rx="2" fill="#263238"/><path d="M0,-2.5 h20 q4,0 5,2.5 h-25z" fill="#ECEFF1" stroke="#78909C" stroke-width=".8"/></g>`;
+  const durazno = (x, y) => `<ellipse cx="${x}" cy="${y}" rx="8" ry="6" fill="#FFA726" stroke="#E65100"/><ellipse cx="${x + 14}" cy="${y}" rx="8" ry="6" fill="#FFB74D" stroke="#E65100"/><circle cx="${x + 14}" cy="${y}" r="2.5" fill="#8D6E63"/>`;
+  const mesaC = (x, y, w = 150) => `<rect x="${x}" y="${y}" width="${w}" height="7" fill="#B0BEC5" stroke="#78909C"/><rect x="${x + 8}" y="${y + 7}" width="6" height="${165 - y - 7}" fill="#78909C"/><rect x="${x + w - 14}" y="${y + 7}" width="6" height="${165 - y - 7}" fill="#78909C"/><rect x="${x + 50}" y="${y - 4}" width="70" height="4" rx="1" fill="#ECEFF1" stroke="#90A4AE"/>`;
+  Object.assign(S, {
+    pe_cuchillo_ok: () => P(mesaC(80, 112) + durazno(170, 104) + W2(110, 165, { pose: 'carry', s: 1.15 }) + `<g class="peCorte">${cuchi(130, 106)}</g>` + `<path d="M196,90 h34" stroke="#2E7D32" stroke-width="3"/><path d="M228,84 l8,6 l-8,6z" fill="#2E7D32"/>` + badge(290, 40, true, 14) + cartelP(170, 190, 200, 'Con guantes, alejando el filo del cuerpo', '#2E7D32')),
+    pe_cuchillo_mal: () => P(mesaC(60, 112) + durazno(110, 104) + W2(190, 165, { pose: 'carry', flip: true, gloves: false, s: 1.15 }) + `<g class="peCorte" style="animation-direction:reverse">${cuchi(170, 106, 180)}</g>` + `<path d="M150,90 h20" stroke="#C62828" stroke-width="3"/><path d="M168,84 l8,6 l-8,6z" fill="#C62828"/>` + badge(290, 40, false, 14) + cartelP(160, 190, 190, 'Hacia el cuerpo y sin guantes', '#C62828')),
+    pe_cuchillo_guarda: () => P(W2(90, 165, { s: 1.15 }) + `<rect x="150" y="80" width="14" height="36" rx="3" fill="#455A64" stroke="#263238"/><rect x="152" y="70" width="10" height="12" rx="2" fill="#263238"/>` + `<g class="peFunda"><g transform="translate(157,84) rotate(90)"><path d="M0,-2.5 h26 q4,0 5,2.5 h-31z" fill="#ECEFF1" stroke="#78909C" stroke-width=".8"/></g><rect x="154" y="66" width="6" height="16" rx="2" fill="#263238"/></g>` + T(157, 136, 'Funda', 11) + `<rect x="190" y="50" width="120" height="70" rx="8" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>` + T(250, 72, 'Guárdalo siempre', 11, '#1B5E20') + T(250, 88, 'en su funda o', 11, '#1B5E20') + T(250, 104, 'porta cuchillos', 11, '#1B5E20') + badge(290, 40, true, 13)),
+    pe_cuchillo_cae: () => P(mesaC(60, 112) + `<g transform="translate(150,150) rotate(65)"><rect x="-13" y="-2.5" width="13" height="5" rx="2" fill="#263238"/><path d="M0,-2.5 h20 q4,0 5,2.5 h-25z" fill="#ECEFF1" stroke="#78909C" stroke-width=".8"/></g>` + W2(230, 165, { pose: 'stop', flip: true, s: 1.15 }) + bubble(170, 24, '¡Déjalo caer!', 110)),
+    pe_guante: () => P(guanteMalla(70, 140) + `<g transform="translate(210,96) scale(1.6)">${cuchi(0, 0, -20)}</g><rect x="240" y="110" width="12" height="40" rx="3" fill="#455A64"/>` + T(90, 170, 'Guantes', 12) + T(235, 170, 'Cuchillo afilado', 12) + T(235, 184, 'y en su funda', 11))
   });
 })();
 
@@ -7458,6 +7473,7 @@ const razonTxt = r => RAZONES[r] ? r + ' (RUT ' + RAZONES[r] + ')' : (r && !/^re
     return typeof o === 'string' ? o.replace(/tu organismo administrador \(mutualidad o ISL\)/g, 'la ACHS').replace(/el organismo administrador \(mutualidad o ISL\)/g, 'la ACHS').replace(/organismo administrador \(mutualidad o ISL\)/g, 'ACHS').replace(/mi organismo administrador/g, 'la ACHS').replace(/tu organismo administrador/g, 'la ACHS').replace(/\(mutualidad o ISL\)/g, '(ACHS)').replace(/el organismo administrador/g, 'la ACHS') : o; };
   TOPICS.forEach(walk);
   { const t = T_('induccion'); const tm = t && t.learn.find(l => /TMERT/.test(l.t)); if (tm) tm.s = 'pe_seleccion'; }
+  L('cortes', 3, { s: 'pe_cuchillo_guarda', x: 'Un cuchillo sin filo obliga a hacer más fuerza y se resbala: pide que lo afilen. Cuando no lo uses, <b>guárdalo con su protección</b>: en su funda o en el porta cuchillos. Nunca suelto entre la fruta, en el bolsillo ni bajo el agua de un lavadero.', k: 'Afilado y guardado en su funda.' });
   L('caldera_general', 2, { s: 'pe_fuga_vapor' }); L('calor_vapor', 3, { s: 'pe_fuga_vapor' }); Q('calor_vapor', 3, { s: 'pe_fuga_vapor' }); L('orden', 5, { s: 'orden_scraps' }); Q('caldera_general', 1, { s: 'pe_fuga_vapor' });
   // ---------- textos de dibujos heredados de otras plataformas
   const fxS = s => s.replace(/FERRETERÍA/g, 'PERELLÓ').replace(/Casco \(en obra\)/g, 'Casco (si se exige)').replace(/Perfiles de acero/g, 'Canto vivo').replace(/IARC Grupo 1/g, '').replace(/Rebajadora/g, '').replace(/Mutualidad o ISL/g, 'ACHS').replace(/Organismo admin\./g, 'ACHS');
@@ -7809,6 +7825,86 @@ document.addEventListener('click', e => { const a = e.target.closest && e.target
 #peInsc .lnk { background:none; border:0; color:#0F543A; text-decoration:underline; font:inherit; cursor:pointer; padding:6px; }
 #peInsc .peRes { display:flex; flex-direction:column; gap:8px; } #peInsc .peRes div { display:flex; gap:10px; align-items:flex-start; background:#F7F8FA; border-radius:12px; padding:10px; } #peInsc .peRes span { font-size:22px; }`;
   document.head.appendChild(css);
+})();
+
+window.MARCA = { nombre: 'Perelló', c1: '#0F543A', c2: '#8C7548', fuente: 'Georgia, serif' };
+// ===== Mejoras comunes para todos los portales de capacitación (Integra Prevención) · 28-10-2026 =====
+// Se agrega al final del script de cada portal. Configurar antes: window.MARCA = { nombre, c1, c2, fuente }.
+// 1) Voz: siglas leídas a la chilena (EPP = "e pe pe", ACHS = "achs", 1404 = "catorce cero cuatro"...).
+// 2) Grúa horquilla con baliza encendida, alarma de retroceso y el nombre de la empresa.
+// 3) Evaluación: marcar no corrige al tiro; se puede cambiar la respuesta y se revisa al tocar el botón.
+// 4) Imágenes de las preguntas más chicas: en las de elegir imagen, ambas caben en la pantalla.
+(function () {
+  const M = window.MARCA || {};
+  // ---------- 1) Pronunciación chilena de siglas
+  const PRON = [
+    [/\bE P P\b/g, 'e pe pe'], [/\bEPP\b/g, 'e pe pe'], [/\bA C H S\b/g, 'achs'], [/\bACHS\b/g, 'achs'], [/\bIST\b/g, 'i ese te'], [/\bISL\b/g, 'i ese ele'],
+    [/\bSAMU\b/g, 'samu'], [/\bPDI\b/g, 'pe de i'], [/\bHDS\b/g, 'hache de ese'], [/\bSGA\b/g, 'ese ge a'], [/\bMIPER\b/g, 'míper'], [/\bIRL\b/g, 'i erre ele'],
+    [/\bPREXOR\b/g, 'préxor'], [/\bCEAL-SM\b/g, 'ceal ese eme'], [/\bSUSESO\b/g, 'suseso'], [/\bISTAS ?21\b/g, 'istas veintiuno'], [/\bSEREMI\b/g, 'seremi'],
+    [/\bSENAPRED\b/g, 'senapred'], [/\bMINSAL\b/g, 'minsal'], [/\bMINTRAB\b/g, 'mintrab'], [/\bDIEP\b/g, 'diep'], [/\bDIAT\b/g, 'diat'], [/\bUV\b/g, 'u ve'],
+    [/\bFPS\b/g, 'efe pe ese'], [/\bNCh\b/g, 'norma chilena'], [/\bGLP\b/g, 'gas licuado'], [/\bSOAP\b/g, 'soap'], [/\bPVD\b/g, 'pantallas'], [/\bBPM\b/g, 'buenas prácticas'],
+    [/\bRIOHS\b/g, 'reglamento interno'], [/\bTMERT\b/g, 'temert'], [/\bCPHS\b/g, 'comité paritario'], [/\bSST\b/g, 'seguridad y salud en el trabajo'],
+    [/\bDS\s?(\d+)/g, 'decreto supremo $1'], [/\bdecreto (\d+)/g, 'decreto supremo $1'], [/\bLOTO\b/g, 'loto'], [/\b5S\b/g, 'cinco ese'], [/\bA-?4\b/g, 'a cuatro'],
+    [/\b1404\b/g, 'catorce cero cuatro'], [/km\/h/g, 'kilómetros por hora'], [/°\s?C\b/g, ' grados'], [/(\d)\s?g\/l/g, '$1 gramos por litro'], [/dB\(A\)/g, 'decibeles'],
+    [/(\d)\s?kg\b/g, '$1 kilos'], [/(\d)\s?m\b/g, '$1 metros'], [/\bRUT\b/g, 'rut'], [/\bN°\s?/g, 'número '], [/\bQR\b/g, 'cu erre'], [/\bOK\b/g, 'okey'],
+    [/\bPYME\b/g, 'pyme'], [/\bAFP\b/g, 'a efe pe'], [/\bSII\b/g, 'ese i i'], [/\bF30-1\b/g, 'efe treinta uno'], [/\bF30\b/g, 'efe treinta'], [/\bCPR\b/g, 'ce pe erre']];
+  const pron = t => PRON.reduce((s, [a, b]) => s.replace(a, b), String(t || ''));
+  window.PRONUNCIAR = pron;
+  try {
+    const U = window.SpeechSynthesisUtterance;
+    if (U && !U.__chile) {
+      const UC = function (t) { const u = new U(pron(t)); return u; };
+      UC.prototype = U.prototype; UC.__chile = true; window.SpeechSynthesisUtterance = UC;
+    }
+  } catch (e) {}
+
+  // ---------- 2) Grúa horquilla: baliza, alarma de retroceso y marca
+  try {
+    if (typeof forklift === 'function' && !forklift.__mejor) {
+      const css = document.createElement('style');
+      css.textContent = '.mjBaliza{animation:mjBal 1s steps(2) infinite}@keyframes mjBal{0%{opacity:1}50%{opacity:.25}}'
+        + '.mjAlarma path{animation:mjAl 1.2s ease-out infinite;opacity:0}.mjAlarma path:nth-child(2){animation-delay:.2s}.mjAlarma path:nth-child(3){animation-delay:.4s}@keyframes mjAl{0%{opacity:0}30%{opacity:1}100%{opacity:0}}';
+      document.head.appendChild(css);
+      const F0 = forklift;
+      forklift = function (x, y, o) {
+        o = o || {}; const g0 = F0(x, y, o); let a = '';
+        a += `<rect x="${x + 36}" y="${y - 86}" width="8" height="6" rx="2" fill="#263238"/><g class="mjBaliza"><circle cx="${x + 40}" cy="${y - 88}" r="5" fill="#FF8F00"/><circle cx="${x + 40}" cy="${y - 88}" r="10" fill="#FFB300" opacity=".35"/></g>`;
+        if (o.rev !== false) a += `<g class="mjAlarma">${[1, 2, 3].map(i => `<path d="M${x - 4 - i * 6},${y - 46 - i * 4} a${i * 7},${i * 7} 0 0 0 0,${14 + i * 8}" stroke="#FF6F00" stroke-width="2.4" fill="none" stroke-linecap="round"/>`).join('')}</g>`;
+        if (M.nombre) a += `<rect x="${x + 14}" y="${y - 37}" width="46" height="12" rx="3" fill="${M.c1 || '#263238'}"/><text x="${x + 37}" y="${y - 28}" font-size="8" font-weight="bold" text-anchor="middle" fill="#fff" font-family="${M.fuente || 'Arial'}"${o.flip ? ` transform="translate(${2 * x + 74},0) scale(-1,1)"` : ''}>${M.nombre}</text>`;
+        return g0 + (o.flip ? `<g transform="translate(${2 * x + 120},0) scale(-1,1)">${a}</g>` : a);
+      };
+      forklift.__mejor = true;
+    }
+  } catch (e) {}
+
+  // ---------- 3) y 4) Evaluación
+  try {
+    const css = document.createElement('style');
+    css.textContent = '.opt.sel{border-color:#64B5F6;background:#16324F;box-shadow:0 0 0 2px #64B5F6 inset}.pick.sel{border-color:#1E88E5;box-shadow:0 0 0 3px #90CAF9}'
+      + '.pick svg{max-height:27vh;width:100%}.qimg svg{max-height:30vh;width:100%;margin:0 auto}.picks{gap:8px}'
+      + '.pick.sel::after{content:"Tu elección";position:absolute;top:6px;right:8px;background:#1E88E5;color:#fff;border-radius:8px;padding:2px 8px;font-size:13px;font-weight:bold}';
+    document.head.appendChild(css);
+    if (typeof answer === 'function' && typeof renderQ === 'function' && !answer.__mejor) {
+      const revelar = answer;                     // la corrección original: se usa recién al tocar "Revisar"
+      const R0 = renderQ;
+      renderQ = function () { st.sel = null; st.revisada = false; R0.apply(this, arguments); };
+      answer = function (btn, ok) {
+        if (st.revisada) return;
+        document.querySelectorAll('#qBody .sel').forEach(b => b.classList.remove('sel'));
+        btn.classList.add('sel'); st.sel = { btn, ok };
+        try { SFX.play('next'); } catch (e) {}
+        const b = document.getElementById('qNext'); b.textContent = 'Revisar mi respuesta'; b.style.display = 'block';
+        try { GUIA.hide(); leerYGuiar([], 'qNext', 'REVISAR', 'Si estás seguro, toca revisar. Si te equivocaste, cambia tu respuesta.'); } catch (e) {}
+        setTimeout(() => b.scrollIntoView({ behavior: 'smooth', block: 'end' }), 50);
+      };
+      answer.__mejor = true;
+      const nx = document.getElementById('qNext'), N0 = nx.onclick;
+      nx.onclick = function (ev) {
+        if (!st.revisada) { if (!st.sel) return; st.revisada = true; revelar(st.sel.btn, st.sel.ok); return; }
+        return N0.call(this, ev);
+      };
+    }
+  } catch (e) {}
 })();
 
 </script>
