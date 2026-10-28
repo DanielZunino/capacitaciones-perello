@@ -504,7 +504,8 @@ function W(x, y, o={}) {
   g += LO([P.hip,P.kL,up(P.fL)],pants,9) + LO([P.hip,P.kR,up(P.fR)],pants,9);
   g += L([mid(P.hip,P.kL,.15),mid(P.kL,P.fL,.8)],'#ffffff',1.2).replace('stroke="#ffffff"','stroke="#ffffff" opacity=".12"');
   // botas de seguridad
-  [[P.fL],[P.fR]].forEach(([f])=>{ const [bx,by]=t(f); g += `<path d="M${bx-5.5*s},${by+1*s} v${-6*s} q0,${-2*s} ${2*s},${-2*s} h${4*s} q${2*s},0 ${2.5*s},${2*s} l${1*s},${2.5*s} h${3.5*s} q${2*s},0 ${2*s},${2*s} v${1.5*s} z" transform="${fx<0?`translate(${2*bx},0) scale(-1,1)`:''}" fill="#3E2723" stroke="${OL}" stroke-width="${1*s}"/><rect x="${bx-6*s}" y="${by}" width="${13.5*s}" height="${2*s}" rx="${.8*s}" fill="#111" transform="${fx<0?`translate(${2*bx},0) scale(-1,1)`:''}"/>`; });
+  [[P.fL],[P.fR]].forEach(([f])=>{ const [bx,by]=t(f); g += `<path d="M${bx-5.5*s},${by+1*s} v${-6*s} q0,${-2*s} ${2*s},${-2*s} h${4*s} q${2*s},0 ${2.5*s},${2*s} l${1*s},${2.5*s} h${3.5*s} q${2*s},0 ${2*s},${2*s} v${1.5*s} z" transform="${fx<0?`translate(${2*bx},0) scale(-1,1)`:''}" fill="${o.boots||'#3E2723'}" stroke="${OL}" stroke-width="${1*s}"/><rect x="${bx-6*s}" y="${by}" width="${13.5*s}" height="${2*s}" rx="${.8*s}" fill="#111" transform="${fx<0?`translate(${2*bx},0) scale(-1,1)`:''}"/>`; });
+  if (o.boots) [P.fL,P.fR].forEach(f=>{ const [bx,by]=t(f); g += `<rect x="${bx-4.6*s}" y="${by-16*s}" width="${9.2*s}" height="${12*s}" rx="${1.6*s}" fill="${o.boots}" stroke="${OL}" stroke-width="${1*s}"/>`; });
   // brazo trasero
   g += LO([P.neck,P.eL,P.hL],shirt,6.5);
   // torso
@@ -512,6 +513,7 @@ function W(x, y, o={}) {
   // cinturón
   { const a=t(mid(P.hip,P.neck,.1)), b=t(mid(P.hip,P.neck,.17)); g += `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="#3E2723" stroke-width="${15*s}"/>`; }
   if (o.vest) { g += L([P.hip,P.neck],'#FF8F00',15.5); [.32,.62].forEach(k=>{ const a=t(mid(P.hip,P.neck,k)), b=t(mid(P.hip,P.neck,k+.07)); g += `<line x1="${(a[0]-7*s).toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${(a[0]+7*s).toFixed(1)}" y2="${a[1].toFixed(1)}" stroke="#ECEFF1" stroke-width="${2.6*s}"/>`; }); }
+  if (o.apron) { const kk = mid(P.kL,P.kR); g += LO([mid(P.hip,P.neck,.82),P.hip,mid(P.hip,kk,.72)],o.apron,15.5); }
   // cuello y brazo delantero
   g += LO([P.neck,P.eR,P.hR],shirt,6.5);
   const glove = o.gloves ? (o.gloves===true?'#FDD835':o.gloves) : SK;
@@ -532,6 +534,8 @@ function W(x, y, o={}) {
      : `<path d="M${(mx-2*s).toFixed(1)},${(my-.4*s).toFixed(1)} q${2*s},${2.2*s} ${4*s},0" stroke="${OL}" stroke-width="${1*s}" fill="none" stroke-linecap="round"/>`;
   if (o.glasses) g += `<rect x="${fx>0?X+1*s:X-9*s}" y="${Y-2.6*s}" width="${8.4*s}" height="${4.4*s}" rx="${1.6*s}" fill="#90CAF9" fill-opacity=".75" stroke="${OL}" stroke-width="${1*s}"/><line x1="${X-4*s*fx}" y1="${Y-1.2*s}" x2="${X+1*s*fx}" y2="${Y-1.2*s}" stroke="${OL}" stroke-width="${.8*s}"/>`;
   if (o.mask) g += `<path d="M${X+(fx>0?.5:-9.5)*s},${Y+2.5*s} h${9*s} v${4.5*s} q${-4.5*s},${3.4*s} ${-9*s},0 Z" fill="#ECEFF1" stroke="#78909C" stroke-width="${.9*s}"/><line x1="${X-6*s*fx}" y1="${Y+1*s}" x2="${X+1*s*fx}" y2="${Y+3*s}" stroke="#78909C" stroke-width="${.8*s}"/>`;
+  if (o.cofia) { g += `<path d="M${X-10.6*s},${Y-3*s} Q${X-12.4*s},${Y-14*s} ${X},${Y-13.6*s} Q${X+12.4*s},${Y-14*s} ${X+10.6*s},${Y-3*s} Z" fill="#FFFFFF" stroke="${OL}" stroke-width="${1*s}"/><path d="M${X-10.4*s},${Y-4.2*s} H${X+10.4*s}" stroke="#90A4AE" stroke-width="${1.6*s}"/>`;
+    for (let i=0;i<5;i++) g += `<circle cx="${X-6*s+i*3*s}" cy="${Y-9*s+(i%2)*2*s}" r="${.55*s}" fill="#B0BEC5"/>`; }
   if (o.helmet!==false) { const hc=o.helmet||'#FFC20E';
     g += `<path d="M${X-10.5*s},${Y-2*s} A${10.5*s},${10.8*s} 0 0 1 ${X+10.5*s},${Y-2*s} Z" fill="${hc}" stroke="${OL}" stroke-width="${1.1*s}"/>`
       + `<rect x="${X-12.5*s}" y="${Y-3.4*s}" width="${25*s}" height="${3.4*s}" rx="${1.7*s}" fill="${hc}" stroke="${OL}" stroke-width="${1*s}"/><path d="M${X+11*s*fx},${Y-3.4*s} q${5*s*fx},${.6*s} ${5.4*s*fx},${3.4*s} h${-5.4*s*fx} z" fill="${hc}" stroke="${OL}" stroke-width="${.9*s}" stroke-linejoin="round"/>`
@@ -6586,6 +6590,8 @@ function enlazarAvance() {
   const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s);
 })();
 // ===== Perelló: dibujos propios de la planta conservera y de deshidratado de mosqueta (SVG + CSS, sin peso extra) =====
+// En Perelló nadie usa casco de obra: por defecto las personas llevan gorro con cofia (salvo que el dibujo indique otra cosa)
+W = (function (W0) { return function (x, y, o) { o = Object.assign({}, o || {}); if (o.helmet === undefined || o.helmet === true) { o.helmet = false; if (!o.vest) o.cofia = true; } return W0(x, y, o); }; })(W);
 (function () {
   const OLp = '#22303A';
   const est = `<style>
@@ -6610,12 +6616,18 @@ function enlazarAvance() {
     return g; };
   const mosq = (x, y) => `<ellipse cx="${x}" cy="${y}" rx="5" ry="6" fill="#D84315" stroke="#8D2B0B"/><ellipse cx="${x + 9}" cy="${y + 1}" rx="5" ry="6" fill="#E64A19" stroke="#8D2B0B"/><path d="M${x - 2},${y - 6} l2,-3 l2,3" stroke="#33691E" stroke-width="1.5" fill="none"/>`;
   const vapor = (x, y, n = 3) => { let g = ''; for (let i = 0; i < n; i++) g += `<path class="peVap" style="animation-delay:-${i * .6}s" d="M${x + i * 10},${y} q-6,-8 0,-16 q6,-8 0,-16" stroke="#B0BEC5" stroke-width="4" fill="none" stroke-linecap="round"/>`; return g; };
+  // Autoclave vertical (como los de la planta): cilindro de pie, tapa arriba con pernos, manómetro y cañería de vapor
+  const autoclaveV = (x, y, abierta) => `<rect x="${x}" y="${y - 108}" width="62" height="100" rx="8" fill="#B0BEC5" stroke="#546E7A" stroke-width="3"/><rect x="${x + 6}" y="${y - 100}" width="10" height="86" rx="4" fill="#fff" opacity=".35"/>`
+    + `<rect x="${x - 4}" y="${y - 70}" width="70" height="5" fill="#90A4AE"/><rect x="${x - 4}" y="${y - 36}" width="70" height="5" fill="#90A4AE"/>`
+    + (abierta ? `<g transform="rotate(-38 ${x + 66} ${y - 112})"><rect x="${x - 6}" y="${y - 118}" width="74" height="10" rx="5" fill="#78909C" stroke="#455A64" stroke-width="2"/></g>`
+               : `<rect x="${x - 6}" y="${y - 118}" width="74" height="12" rx="6" fill="#78909C" stroke="#455A64" stroke-width="2"/>${[0, 1, 2, 3, 4].map(i => `<rect x="${x + i * 15}" y="${y - 122}" width="5" height="18" rx="2" fill="#37474F"/>`).join('')}`)
+    + `<rect x="${x + 8}" y="${y - 8}" width="8" height="8" fill="#546E7A"/><rect x="${x + 46}" y="${y - 8}" width="8" height="8" fill="#546E7A"/><rect x="${x + 62}" y="${y - 92}" width="18" height="6" fill="#78909C"/>` + mano(x + 86, y - 86);
   const autoclave = (x, y) => `<rect x="${x}" y="${y - 70}" width="130" height="62" rx="31" fill="#B0BEC5" stroke="#546E7A" stroke-width="3"/><circle cx="${x + 120}" cy="${y - 39}" r="24" fill="#90A4AE" stroke="#455A64" stroke-width="4"/>${[0, 1, 2, 3, 4, 5].map(i => `<circle cx="${x + 120 + 20 * Math.cos(i * 1.05)}" cy="${y - 39 + 20 * Math.sin(i * 1.05)}" r="2.6" fill="#37474F"/>`).join('')}<rect x="${x + 20}" y="${y - 8}" width="10" height="8" fill="#546E7A"/><rect x="${x + 95}" y="${y - 8}" width="10" height="8" fill="#546E7A"/>` + mano(x + 40, y - 74);
   const mano = (x, y) => `<line x1="${x}" y1="${y}" x2="${x}" y2="${y + 6}" stroke="#455A64" stroke-width="3"/><circle cx="${x}" cy="${y - 10}" r="11" fill="#fff" stroke="#455A64" stroke-width="3"/><line x1="${x}" y1="${y - 10}" x2="${x + 7}" y2="${y - 15}" stroke="#C62828" stroke-width="2.5" stroke-linecap="round"/><path d="M${x - 8},${y - 6} a10,10 0 0 1 4,-11" stroke="#2E7D32" stroke-width="2.5" fill="none"/><path d="M${x + 4},${y - 19} a10,10 0 0 1 6,6" stroke="#C62828" stroke-width="2.5" fill="none"/>`;
   const caldera = (x, y) => `<rect x="${x}" y="${y - 110}" width="70" height="110" rx="10" fill="#D84315" stroke="#8D2B0B" stroke-width="3"/><rect x="${x + 26}" y="${y - 150}" width="16" height="42" fill="#546E7A"/><rect x="${x + 12}" y="${y - 40}" width="46" height="24" rx="4" fill="#263238"/><path d="M${x + 20},${y - 22} q6,-14 12,0 q6,-14 12,0" fill="#FFB300"/><rect x="${x + 6}" y="${y - 100}" width="58" height="8" fill="#BF360C"/>` + mano(x + 35, y - 60) + `<rect x="${x + 70}" y="${y - 90}" width="40" height="7" fill="#78909C"/>`;
   const cuchillo = (x, y, r = 0, s = 1) => `<g transform="translate(${x},${y}) rotate(${r}) scale(${s})"><rect x="-30" y="-5" width="26" height="10" rx="3" fill="#263238"/><path d="M-4,-5 h36 q6,0 8,5 h-44z" fill="#ECEFF1" stroke="#90A4AE"/></g>`;
-  const guanteMalla = (x, y) => { let g = `<path d="M${x},${y} v-30 q0,-6 5,-6 q5,0 5,6 v-10 q0,-6 5,-6 q5,0 5,6 v8 q0,-6 5,-6 q5,0 5,6 v12 q0,-5 5,-5 q5,0 5,5 v20 q0,16 -18,16 h-4 q-18,0 -18,-16z" fill="#B0BEC5" stroke="#546E7A" stroke-width="2"/>`;
-    for (let i = 0; i < 6; i++) g += `<line x1="${x}" y1="${y - 30 + i * 7}" x2="${x + 40}" y2="${y - 30 + i * 7}" stroke="#78909C" stroke-width=".8"/>`; return g; };
+  // Guante de nitrilo amarillo (en Perelló no se usa guante anticorte)
+  const guanteMalla = (x, y, c = '#FDD835') => `<path d="M${x},${y} v-30 q0,-6 5,-6 q5,0 5,6 v-10 q0,-6 5,-6 q5,0 5,6 v8 q0,-6 5,-6 q5,0 5,6 v12 q0,-5 5,-5 q5,0 5,5 v20 q0,16 -18,16 h-4 q-18,0 -18,-16z" fill="${c}" stroke="#9E7C00" stroke-width="2"/><path d="M${x + 4},${y + 8} h32" stroke="#9E7C00" stroke-width="1.5"/>`;
   const conoPiso = (x, y) => `<path d="M${x},${y} l14,-46 l14,46z" fill="#FFC20E" stroke="#8A5A00" stroke-width="2"/><path d="M${x + 14},${y - 34} l-5,14 h10z" fill="#263238"/>${T(x + 14, y - 6, '!', 10, '#263238')}`;
   const charco = (x, y, w = 70) => `<ellipse cx="${x}" cy="${y}" rx="${w / 2}" ry="6" fill="#4FC3F7" opacity=".6"/><ellipse cx="${x - 8}" cy="${y - 1}" rx="${w / 6}" ry="2" fill="#fff" opacity=".7"/>`;
   const horno = (x, y, abierto) => `<rect x="${x}" y="${y - 120}" width="120" height="120" rx="6" fill="#8D6E63" stroke="#4E342E" stroke-width="3"/><rect x="${x + 10}" y="${y - 110}" width="100" height="100" fill="${abierto ? '#3E2723' : '#A1887F'}"/>`
@@ -6637,7 +6649,9 @@ function enlazarAvance() {
   const nube = (x, y) => `<g class="peLat" opacity=".85"><circle cx="${x}" cy="${y}" r="16" fill="#C5E1A5"/><circle cx="${x + 18}" cy="${y - 6}" r="18" fill="#C5E1A5"/><circle cx="${x + 36}" cy="${y}" r="14" fill="#C5E1A5"/></g>${T(x + 18, y + 4, '☠', 16, '#33691E')}`;
   const visera = (x, y) => `<path d="M${x},${y} h30 v26 q-15,10 -30,0z" fill="#B3E5FC" fill-opacity=".7" stroke="#0277BD" stroke-width="2"/>`;
   const delantal = (x, y) => `<path d="M${x - 9},${y - 58} h18 l4,40 h-26z" fill="#ECEFF1" stroke="#90A4AE"/>`;
-  const W2 = (x, y, o) => W(x, y, Object.assign({ helmet: '#ECEFF1' }, o));   // en planta de alimentos: cofia/casco blanco
+  // Vestimenta de la conservera: pechera blanca, botas blancas, guantes de nitrilo amarillos, mascarilla y gorro con cofia
+  const W2 = (x, y, o) => W(x, y, Object.assign({ helmet: false, cofia: true, apron: '#FFFFFF', boots: '#FAFAFA', gloves: '#FDD835', mask: true, shirt: '#ECEFF1', pants: '#CFD8DC' }, o));
+  window.WC = W2;
   const P = (inner) => sv(bg() + est + inner);
   Object.assign(S, {
     // --- proceso conservero
@@ -6647,8 +6661,8 @@ function enlazarAvance() {
     pe_loto: () => P(`<rect x="40" y="60" width="70" height="90" rx="6" fill="#B0BEC5" stroke="#78909C" stroke-width="2"/><rect x="62" y="80" width="26" height="40" rx="3" fill="#455A64"/><rect x="66" y="104" width="18" height="12" fill="#E53935"/>` + padlock(96, 140) + cinta(180, 150, 120) + T(75, 52, 'Tablero', 12)),
     pe_cerradora: () => P(`<rect x="110" y="40" width="80" height="80" rx="6" fill="#78909C" stroke="#455A64" stroke-width="2"/><rect x="128" y="58" width="44" height="44" rx="4" fill="#FFB300" fill-opacity=".5" stroke="#E65100" stroke-width="2"/><circle cx="150" cy="80" r="12" fill="#CFD8DC" stroke="#455A64"/>` + cinta(10, 135, 300) + T(150, 32, 'Cerradora con resguardo', 12)),
     // --- cortes
-    pe_cuchillo_ok: () => P(`<rect x="60" y="112" width="200" height="10" fill="#8D6E63"/>` + W2(110, 165, { pose: 'carry', gloves: '#B0BEC5', shirt: '#ECEFF1' }) + cuchillo(170, 104, 0) + `<path d="M190,92 l30,0" stroke="#2E7D32" stroke-width="3" marker-end=""/><path d="M218,86 l8,6 l-8,6z" fill="#2E7D32"/>` + badge(290, 40, true, 14) + cartelP(160, 190, 170, 'Corta alejando el filo del cuerpo', '#2E7D32')),
-    pe_cuchillo_mal: () => P(`<rect x="60" y="112" width="200" height="10" fill="#8D6E63"/>` + W2(170, 165, { pose: 'carry', shirt: '#ECEFF1' }) + cuchillo(150, 104, 180) + badge(290, 40, false, 14) + cartelP(160, 190, 170, 'Hacia el cuerpo y sin guante', '#C62828')),
+    pe_cuchillo_ok: () => P(`<rect x="60" y="112" width="200" height="10" fill="#8D6E63"/>` + W2(110, 165, { pose: 'carry' }) + cuchillo(170, 104, 0) + `<path d="M190,92 l30,0" stroke="#2E7D32" stroke-width="3" marker-end=""/><path d="M218,86 l8,6 l-8,6z" fill="#2E7D32"/>` + badge(290, 40, true, 14) + cartelP(160, 190, 170, 'Corta alejando el filo del cuerpo', '#2E7D32')),
+    pe_cuchillo_mal: () => P(`<rect x="60" y="112" width="200" height="10" fill="#8D6E63"/>` + W2(170, 165, { pose: 'carry', gloves: false }) + cuchillo(150, 104, 180) + badge(290, 40, false, 14) + cartelP(160, 190, 170, 'Hacia el cuerpo y sin guante', '#C62828')),
     pe_guante: () => P(guanteMalla(70, 140) + cuchillo(220, 90, -20, 1.4) + T(90, 170, 'Guante anticorte', 12) + T(225, 170, 'Cuchillo afilado', 12) + T(225, 184, 'y en su funda', 11)),
     pe_cuchillo_cae: () => P(`<rect x="60" y="112" width="200" height="10" fill="#8D6E63"/>` + cuchillo(150, 140, 60) + W2(220, 165, { pose: 'stop', flip: true, shirt: '#ECEFF1' }) + bubble(170, 24, '¡Déjalo caer!', 110)),
     pe_latas: () => P(`<g>${[0, 1, 2, 3].map(i => lata(60 + i * 18, 150)).join('')}</g>` + `<path d="M150,120 l40,-6 l-6,10 l18,-2" stroke="#90A4AE" stroke-width="3" fill="none"/>` + guanteMalla(220, 160) + T(160, 40, 'Bordes de latas y tapas: cortan', 13)),
@@ -6657,8 +6671,9 @@ function enlazarAvance() {
     pe_resbalon: () => P(charco(150, 168, 120) + `<g class="peResb">${W2(150, 165, { pose: 'walk', face: 'worried', shirt: '#ECEFF1' })}</g>` + badge(290, 40, false, 14)),
     pe_botas: () => P(`<path d="M90,160 v-50 h30 v38 q30,2 34,12z" fill="#ECEFF1" stroke="#455A64" stroke-width="2"/>` + `<path d="M90,160 h64" stroke="#263238" stroke-width="6" stroke-dasharray="6 3"/>` + `<path d="M200,160 v-50 h30 v38 q30,2 34,12z" fill="#263238"/><path d="M200,160 h64" stroke="#111" stroke-width="6" stroke-dasharray="6 3"/>` + T(122, 182, 'Bota de goma', 11) + T(232, 182, 'Zapato de seguridad', 11) + T(160, 40, 'Suela antideslizante', 14)),
     // --- calor y vapor
-    pe_autoclave: () => P(autoclave(30, 160) + vapor(100, 86) + W2(250, 165, { pose: 'stop', flip: true, gloves: '#8D6E63', shirt: '#ECEFF1' }) + T(95, 40, 'Autoclave: vapor a presión', 12)),
-    pe_vapor_mal: () => P(autoclave(20, 160) + vapor(140, 120, 4) + W2(200, 165, { pose: 'point', flip: true, face: 'pain', shirt: '#ECEFF1' }) + badge(290, 40, false, 14) + cartelP(110, 192, 200, 'Abrir con presión: quemadura grave', '#C62828')),
+    pe_autoclave: () => P(autoclaveV(30, 165) + autoclaveV(140, 165) + vapor(240, 60) + W2(275, 165, { pose: 'stop', flip: true }) + T(120, 36, 'Autoclaves verticales: vapor a presión', 12)),
+    pe_vapor_mal: () => P(autoclaveV(40, 165, true) + `<g transform="translate(0,-40)">${vapor(55, 70, 4)}</g>` + W2(190, 165, { pose: 'point', flip: true, face: 'pain' }) + badge(290, 40, false, 14) + cartelP(160, 192, 230, 'Abrir con presión: quemadura grave', '#C62828')),
+    pe_autoclave_ok: () => P(autoclaveV(40, 165) + `<rect x="150" y="60" width="140" height="64" rx="8" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>` + T(220, 84, 'Manómetro en cero', 12, '#1B5E20') + T(220, 104, 'y purga hecha', 12, '#1B5E20') + badge(290, 40, true, 14)),
     pe_marmita: () => P(`<path d="M70,150 q0,-50 0,-60 h100 v60 q-50,20 -100,0z" fill="#B0BEC5" stroke="#546E7A" stroke-width="3"/>` + vapor(100, 86) + W2(240, 165, { pose: 'carry', flip: true, gloves: '#8D6E63', shirt: '#ECEFF1' }) + visera(226, 86) + T(120, 40, 'Marmitas y líquidos calientes', 12)),
     pe_calor: () => P(termo(60, 150, 46) + W2(160, 165, { pose: 'carry', shirt: '#ECEFF1' }) + `<rect x="230" y="110" width="22" height="44" rx="6" fill="#4FC3F7" stroke="#0277BD" stroke-width="2"/><rect x="235" y="102" width="12" height="8" fill="#0277BD"/>` + T(240, 175, 'Agua seguido', 12)),
     // --- químicos de aseo
@@ -6691,6 +6706,83 @@ function enlazarAvance() {
     pe_celular: () => P(auto(40, 165, '#1565C0') + `<rect x="200" y="60" width="44" height="76" rx="8" fill="#263238"/><rect x="205" y="68" width="34" height="56" fill="#90CAF9"/>` + `<line x1="190" y1="50" x2="256" y2="146" stroke="#C62828" stroke-width="6"/>` + badge(290, 40, false, 14)),
     pe_cinturon: () => P(`<rect x="90" y="40" width="140" height="120" rx="12" fill="#ECEFF1" stroke="#90A4AE" stroke-width="2"/>` + W(160, 160, { helmet: false, s: 1.1 }) + `<line x1="146" y1="88" x2="174" y2="132" stroke="#C62828" stroke-width="5"/>` + badge(290, 40, true, 14) + T(160, 184, 'Cinturón siempre, adelante y atrás', 12)),
     pe_auto_planta: () => P(auto(20, 165, '#2E7D32') + `<circle cx="230" cy="80" r="30" fill="#fff" stroke="#C62828" stroke-width="6"/>` + T(230, 89, '10', 24) + T(230, 130, 'km/h en la planta', 12))
+  });
+  // ===== Revisión 28-10-2026: dibujos que calzan con el texto (sin sierras ni elementos de obra) =====
+  const ruidoW = (x, y, c = '#C62828') => [1, 2, 3].map(i => `<path d="M${x + i * 7},${y - i * 6} a${i * 8},${i * 8} 0 0 1 0,${i * 12}" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round"/>`).join('');
+  const cerr = (x, y, r) => `<rect x="${x}" y="${y - 80}" width="64" height="80" rx="5" fill="#78909C" stroke="#455A64" stroke-width="2"/><rect x="${x + 12}" y="${y - 66}" width="40" height="34" rx="3" fill="#FFB300" fill-opacity=".45" stroke="#E65100" stroke-width="2"/><circle cx="${x + 32}" cy="${y - 49}" r="9" fill="#CFD8DC" stroke="#455A64"/><rect x="${x + 8}" y="${y - 22}" width="48" height="10" fill="#455A64"/>${T(x + 32, y - 86, 'Cerradora', 10)}` + (r ? ruidoW(x + 66, y - 62) : '');
+  const dbm = (x, y, v, c = '#C62828') => `<rect x="${x}" y="${y - 58}" width="40" height="58" rx="6" fill="#455A64"/><rect x="${x + 5}" y="${y - 52}" width="30" height="20" rx="2" fill="#C8E6C9"/>${T(x + 20, y - 37, v, 12, c)}${T(x + 20, y - 14, 'dB(A)', 9, '#fff')}`;
+  const oreja = (x, y) => `<path d="M${x},${y} q-22,-2 -22,-28 q0,-24 22,-24 q20,0 20,22 q0,14 -10,20 q-6,4 -6,10z" fill="#F2C29B" stroke="#8D5A3B" stroke-width="2"/><path d="M${x - 8},${y - 26} q2,-10 10,-8" stroke="#8D5A3B" stroke-width="2" fill="none"/>`;
+  const caja = (x, y, w = 30, h = 22) => box(x, y, w, h);
+  const ruma = (x, y, mal) => { let g = ''; for (let i = 0; i < 5; i++) for (let j = 0; j < 3; j++) g += caja(x + j * 30 + (mal ? i * 4 + (j === 1 && i === 3 ? 10 : 0) : 0), y - i * 22); return `<rect x="${x - 4}" y="${y}" width="${98}" height="6" fill="#8D6E63"/>` + g; };
+  const OK = (x = 300, y = 30) => badge(x, y, true, 13), NO = (x = 300, y = 30) => badge(x, y, false, 13);
+  const sup = (x, y, o) => W(x, y, Object.assign({ shirt: '#2E7D32', pants: '#37474F', vest: false, cofia: true, helmet: false }, o || {}));
+  Object.assign(S, {
+    // --- accidentes (prevención primero)
+    pe_evitable: () => P(W2(70, 165) + `<path d="M190,40 l50,16 v34 q0,40 -50,58 q-50,-18 -50,-58 v-34z" fill="#2E7D32" stroke="#1B5E20" stroke-width="3"/><path d="M168,92 l16,16 l30,-32" stroke="#fff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` + T(190, 172, 'Los accidentes se pueden evitar', 13, '#1B5E20')),
+    accidente_avisa: () => P(`<rect x="20" y="112" width="120" height="8" fill="#B0BEC5"/><rect x="28" y="120" width="6" height="45" fill="#78909C"/><rect x="126" y="120" width="6" height="45" fill="#78909C"/>` + cuchillo(70, 106, 0, .8) + W2(160, 165, { pose: 'stop', flip: true, face: 'worried' }) + `<circle cx="174" cy="104" r="4" fill="#C62828"/>` + sup(260, 165, { pose: 'point', flip: true }) + bubble(120, 20, 'Me corté: aviso de inmediato', 175)),
+    accidente_que: () => P(cinta(20, 120, 150) + W2(200, 165, { pose: 'stop', flip: true, face: 'pain' }) + `<circle cx="214" cy="104" r="4" fill="#C62828"/>` + `<rect x="130" y="174" width="185" height="18" rx="9" fill="#1565C0"/>` + T(222, 187, 'A causa o con ocasión del trabajo', 10, '#fff')),
+    accidente_ocultar: () => P(W2(90, 165, { face: 'worried' }) + bubble(4, 60, 'No es nada… no aviso', 140) + NO(140, 30) + divider() + W2(240, 165, { pose: 'point', flip: true }) + bubble(172, 60, 'Aviso a mi jefatura', 120) + OK()),
+    accidente_auto: () => P(cinta(10, 125, 120) + W2(110, 165, { pose: 'point', flip: true }) + T(80, 40, '¡Rápido!', 13, '#C62828') + NO(150, 40) + divider() + cinta(175, 125, 100, { stop: true }) + W2(290, 165, { pose: 'stop', flip: true }) + T(240, 40, 'Detengo primero', 12, '#2E7D32') + OK()),
+    // --- autocuidado y peligros
+    auto_companero: () => P(cinta(10, 125, 170) + W2(150, 165, { pose: 'point', flip: true }) + W2(250, 165, { pose: 'stop', flip: true }) + bubble(160, 20, '¡Espera! Detén la cinta', 150)),
+    auto_mal: () => S.pe_cinta_mal(), auto_ok: () => S.pe_cinta_ok(),
+    peligros_vs: () => P(cinta(10, 125, 140) + T(80, 36, 'PELIGRO', 15, '#C62828') + T(80, 186, 'La cinta en marcha', 11, '#C62828') + `<path d="M150,100 q30,-30 70,-6" stroke="#1565C0" stroke-width="3" fill="none" stroke-dasharray="5 4"/>` + W2(250, 165, { pose: 'point', flip: true }) + T(250, 36, 'RIESGO', 15, '#1565C0') + T(250, 186, 'Que me atrape la mano', 11, '#1565C0')),
+    peligros_auto: () => P(cinta(10, 125, 120) + W2(110, 165, { pose: 'point', flip: true }) + T(75, 40, 'Saco el resguardo', 11, '#C62828') + NO(150, 40) + divider() + cinta(175, 125, 100, { guard: true, stop: true }) + W2(290, 165, { pose: 'stop', flip: true }) + T(240, 40, 'Detengo y aviso', 11, '#2E7D32') + OK()),
+    // --- máquinas
+    pe_parada: () => P(cinta(10, 125, 190, { stop: true }) + `<circle cx="206" cy="99" r="14" fill="none" stroke="#C62828" stroke-width="3"/>` + W2(250, 165, { pose: 'point', flip: true }) + bubble(150, 20, '¡Parada de emergencia!', 160)),
+    pe_bloqueo: () => P(cinta(10, 125, 170, { stop: true }) + `<rect x="196" y="40" width="110" height="46" rx="6" fill="#FFF3E0" stroke="#E65100" stroke-width="2"/>` + T(251, 58, 'Detenida', 11, '#E65100') + T(251, 74, 'parada enclavada', 11, '#E65100') + W2(250, 165, { pose: 'stop', flip: true }) + bubble(10, 20, 'Aviso: estoy limpiando', 150)),
+    pe_autocuidado: () => P(cinta(10, 125, 170, { stop: true }) + W2(230, 165, { pose: 'point', flip: true }) + `<rect x="10" y="22" width="300" height="24" rx="12" fill="#2E7D32"/>` + T(160, 39, 'Detengo · bloqueo · aviso: nunca "es un segundo"', 12, '#fff')),
+    loose: () => P(cinta(10, 125, 170) + W(200, 165, { pose: 'point', flip: true, loose: true, cofia: false, helmet: false, hair: true }) + NO(150, 40) + T(70, 62, 'Pañuelo y pelo suelto', 11, '#C62828') + divider() + W2(270, 165) + T(240, 62, 'Pelo en la cofia', 11, '#2E7D32') + OK()),
+    // --- EPP de la conservera
+    pe_epp_todo: () => P(W2(160, 170, { s: 1.35 }) + [['Gorro con cofia', 52, 150, 70], ['Mascarilla', 86, 162, 82], ['Guantes de nitrilo', 128, 140, 128]].map(([l, y, x2, y2]) => `<line x1="98" y1="${y - 4}" x2="${x2}" y2="${y2}" stroke="#0F543A" stroke-width="1.5"/>${txt(6, y, l, 11, '#0F543A', 'bold', 'start')}`).join('') + [['Pechera blanca', 96, 168, 108], ['Botas blancas', 160, 172, 160]].map(([l, y, x2, y2]) => `<line x1="226" y1="${y - 4}" x2="${x2}" y2="${y2}" stroke="#0F543A" stroke-width="1.5"/>${txt(314, y, l, 11, '#0F543A', 'bold', 'end')}`).join('')),
+    pe_epp_give: () => P(sup(60, 165, { pose: 'carry' }) + `<rect x="100" y="90" width="120" height="40" rx="6" fill="#fff" stroke="#90A4AE"/>` + guanteMalla(112, 124).replace(/<path/g, '<path transform="translate(112,124) scale(.45) translate(-112,-124)"') + `<path d="M160,118 q12,-24 24,0z" fill="#fff" stroke="#90A4AE"/><rect x="190" y="104" width="16" height="20" rx="3" fill="#FAFAFA" stroke="#90A4AE"/>` + W2(260, 165, { pose: 'point', flip: true }) + bubble(20, 20, 'Sin costo para ti', 100) + bubble(210, 20, '¡Y lo uso!', 80)),
+    pe_epp_area: () => P([['CONSERVERA', '#0F543A', ['Cofia', 'Mascarilla', 'Pechera', 'Guantes', 'Botas blancas']], ['ASEO', '#6A1B9A', ['Guantes', 'largos', 'Antiparras', 'Pechera']], ['CALOR', '#BF360C', ['Guantes', 'para calor', 'Fonos en', 'caldera']], ['PATIO', '#E65100', ['Chaleco', 'reflectante', 'Zapatos de', 'seguridad']]].map(([t, c, ls], i) => `<rect x="${8 + i * 78}" y="26" width="72" height="140" rx="8" fill="#fff" stroke="${c}" stroke-width="2"/><rect x="${8 + i * 78}" y="26" width="72" height="22" rx="8" fill="${c}"/>${T(44 + i * 78, 42, t, 9, '#fff')}` + ls.map((l, j) => T(44 + i * 78, 70 + j * 19, l, 9.5)).join('')).join('') + T(160, 186, 'Tu jefatura te indica el EPP exacto de tu puesto', 11)),
+    pe_epp_mal: () => P(W(160, 170, { s: 1.3, cofia: false, helmet: false, hair: true, apron: '#FFFFFF', boots: '#FAFAFA', shirt: '#ECEFF1', pants: '#CFD8DC' }) + `<path d="M162,96 h12 v5 q-6,4 -12,0z" transform="translate(0,12)" fill="#ECEFF1" stroke="#78909C"/>` + NO(290, 36) + T(70, 70, 'Pelo fuera de la cofia', 11, '#C62828') + T(70, 120, 'Mascarilla en el cuello', 11, '#C62828') + T(70, 150, 'Sin guantes', 11, '#C62828')),
+    pe_epp_ok: () => P(W2(160, 170, { s: 1.3 }) + OK(290, 36) + T(70, 70, 'Pelo dentro de la cofia', 11, '#2E7D32') + T(70, 100, 'Mascarilla: nariz y boca', 11, '#2E7D32') + T(70, 130, 'Guantes de tu talla', 11, '#2E7D32')),
+    pe_epp_revisa: () => P(guanteMalla(50, 140) + `<circle cx="66" cy="120" r="5" fill="#ECEFF1" stroke="#9E7C00"/>` + NO(110, 70) + `<path d="M130,120 h50" stroke="#2E7D32" stroke-width="4"/><path d="M178,112 l10,8 l-10,8z" fill="#2E7D32"/>` + W2(250, 165, { pose: 'point', flip: true }) + bubble(180, 20, 'Pido recambio', 90)),
+    epp_time: () => P(`<rect x="20" y="112" width="140" height="8" fill="#B0BEC5"/>` + cuchillo(80, 106, 0, .8) + W(190, 165, { pose: 'carry', flip: true, cofia: true, helmet: false, apron: '#FFFFFF', boots: '#FAFAFA', mask: true, shirt: '#ECEFF1', pants: '#CFD8DC' }) + T(90, 40, 'Basta un segundo sin guantes', 12, '#C62828') + `<circle cx="285" cy="50" r="18" fill="#fff" stroke="#263238" stroke-width="3"/><path d="M285,50 v-11 M285,50 l8,4" stroke="#263238" stroke-width="3"/>`),
+    // --- orden y aseo
+    orden_trip: () => P(`<g>${[0, 1, 2].map(i => lata(60 + i * 26, 168)).join('')}</g><ellipse cx="160" cy="168" rx="14" ry="4" fill="#8D6E63"/>` + `<g class="peResb">${W2(150, 165, { pose: 'carry', face: 'worried' })}</g>` + caja(130, 112, 34, 26) + T(160, 40, 'Latas y restos en el piso: tropiezo y caída', 12)),
+    orden_stack: () => P(ruma(20, 160, true) + NO(140, 30) + T(70, 186, 'Inclinada y despareja', 10, '#C62828') + divider() + ruma(190, 160) + OK() + T(238, 186, 'Pareja y estable', 10, '#2E7D32')),
+    orden_scraps: () => P(cinta(10, 120, 170) + [0, 1, 2, 3].map(i => `<ellipse cx="${40 + i * 30}" cy="167" rx="7" ry="3" fill="#8D6E63"/>`).join('') + `<path d="M220,165 v-50 h56 v50z" fill="#43A047" stroke="#1B5E20" stroke-width="2"/>${T(248, 146, 'RESTOS', 11, '#fff')}` + W2(200, 165, { pose: 'carry', flip: true }) + T(160, 30, 'Al contenedor, durante el turno', 12, '#2E7D32')),
+    // --- cargas
+    pe_bandeja_dos: () => P(W2(90, 165, { pose: 'carry' }) + W2(230, 165, { pose: 'carry', flip: true }) + `<rect x="100" y="110" width="120" height="8" fill="#B0BEC5" stroke="#78909C"/>` + [0, 1, 2, 3, 4, 5].map(i => mosq(112 + i * 18, 104)).join('') + bubble(20, 20, '¡Arriba!', 70) + bubble(230, 20, '¡Vamos!', 70)),
+    // --- incendios y emergencias
+    pe_combustibles: () => P(caja(20, 165, 40, 30) + caja(24, 135, 34, 26) + `<rect x="70" y="150" width="70" height="15" fill="#A1887F" stroke="#6D4C41"/>` + T(105, 182, 'Cartón y pallets', 10) + `<rect x="160" y="110" width="30" height="55" rx="4" fill="#C62828" stroke="#7F0000" stroke-width="2"/>` + T(175, 182, 'Combustible', 10) + `<rect x="230" y="70" width="60" height="80" rx="4" fill="#B0BEC5" stroke="#546E7A" stroke-width="2"/><path d="M262,92 l-10,22 h12 l-6,20" stroke="#FFC20E" stroke-width="4" fill="none"/>` + T(260, 182, 'Tableros', 10) + T(160, 36, 'En la planta también hay combustible', 13)),
+    incendios_viruta: () => P(horno(20, 165, false) + caja(150, 165, 40, 30) + caja(156, 135, 30, 24) + `<rect x="190" y="150" width="60" height="15" fill="#A1887F" stroke="#6D4C41"/>` + NO(290, 40) + T(230, 70, 'Cartón y pallets', 12, '#C62828') + T(230, 88, 'junto al horno', 12, '#C62828')),
+    emergencias_luz: () => P(`<rect x="0" y="0" width="320" height="200" fill="#000" opacity=".25"/>` + cinta(10, 125, 170, { stop: true }) + W2(240, 165, { pose: 'stop', flip: true }) + `<rect x="190" y="40" width="44" height="22" rx="4" fill="#263238"/>${T(212, 56, 'OFF', 11, '#FFC20E')}` + T(160, 24, 'Corte de luz: quieto y manos fuera', 12, '#fff')),
+    // --- ruido (cerradora en vez de sierra)
+    ruido_fuentes: () => P(cerr(20, 165, true) + `<rect x="130" y="110" width="50" height="55" rx="6" fill="#1565C0" stroke="#0D47A1" stroke-width="2"/>${T(155, 182, 'Compresor', 10)}` + W2(260, 165, { muffs: 'on', flip: true }) + T(230, 40, 'También te llega', 12) + T(230, 56, 'si estás cerca', 12)),
+    ruido_limite: () => P(dbm(20, 150, '85') + cerr(90, 165, true) + `<circle cx="270" cy="70" r="30" fill="#1565C0"/><path d="M252,74 a18,18 0 0 1 36,0" stroke="#fff" stroke-width="5" fill="none"/><rect x="248" y="72" width="9" height="14" rx="3" fill="#fff"/><rect x="283" y="72" width="9" height="14" rx="3" fill="#fff"/>` + T(270, 120, 'Zona señalizada:', 10, '#1565C0') + T(270, 134, 'siempre puesto', 10, '#1565C0') + T(160, 30, 'Límite 8 h: 85 dB(A)', 13, '#C62828')),
+    ruido_metro: () => P(cerr(10, 165, true) + W2(150, 165, { pose: 'point' }) + W2(230, 165, { flip: true }) + bubble(110, 20, '¡¿QUÉ?!', 60) + `<path d="M150,180 h80" stroke="#1565C0" stroke-width="2"/>${T(190, 194, '1 metro… ¡y gritando!', 10, '#1565C0')}`),
+    ruido_siempre: () => P(`<circle cx="60" cy="90" r="34" fill="#fff" stroke="#263238" stroke-width="4"/><path d="M60,90 v-22 M60,90 l14,8" stroke="#263238" stroke-width="4"/>` + T(60, 150, 'Toda la jornada', 12, '#1565C0') + cerr(130, 165, true) + W2(270, 165, { muffs: 'on', flip: true })),
+    ruido_auto: () => P(cerr(5, 165, true) + W2(110, 165, { muffs: 'neck', flip: true }) + bubble(70, 20, '¿Qué?', 50) + NO(150, 40) + divider() + W2(220, 165, { muffs: 'on' }) + W2(270, 165, { muffs: 'on', flip: true }) + T(240, 62, 'Lejos de la máquina', 11, '#2E7D32') + OK()),
+    ruido_q_82: () => P(dbm(20, 150, '82', '#E65100') + cerr(100, 165, true) + T(250, 90, '?', 40, '#C62828')),
+    ruido_q_charla: () => P(cerr(10, 165, true) + W2(150, 165, { muffs: 'on' }) + W2(220, 165, { muffs: 'on', flip: true }) + bubble(140, 20, '¡Oye, una cosa!', 120)),
+    enfermedades_ruido: () => P(cerr(20, 165, true) + oreja(240, 140) + `<path d="M226,64 l20,-10 M230,76 l22,-4" stroke="#C62828" stroke-width="3"/>` + `<rect x="170" y="162" width="145" height="20" rx="10" fill="#C62828"/>${T(242, 176, 'Hipoacusia: permanente', 10, '#fff')}`),
+    enfermedades_fonosMal: () => P(cerr(30, 165, true) + W2(220, 165, { muffs: 'neck', flip: true }) + NO() + T(220, 60, 'Fonos en el cuello', 12, '#C62828')),
+    enfermedades_fonosBien: () => P(cerr(30, 165, true) + W2(220, 165, { muffs: 'on', flip: true }) + OK() + T(220, 60, 'Fonos puestos', 12, '#2E7D32')),
+    enfermedades_polvo: () => P(bins(30, 165) + `<g opacity=".7">${[0, 1, 2, 3, 4, 5, 6].map(i => `<circle class="peVap" style="animation-delay:-${i * .3}s" cx="${50 + i * 16}" cy="${90 + (i % 3) * 12}" r="2.5" fill="#8D6E63"/>`).join('')}</g>` + W2(240, 165, { glasses: true, flip: true }) + T(160, 36, 'Pelusa de mosqueta: irrita ojos y garganta', 12)),
+    psico_auto: () => P(cinta(10, 125, 120) + W2(110, 165, { face: 'worried', flip: true }) + T(120, 50, 'z z', 14, '#5C6BC0') + NO(150, 40) + divider() + W2(220, 165, { pose: 'point' }) + sup(280, 165, { flip: true }) + bubble(165, 56, 'No estoy bien, aviso', 125) + OK()),
+    // --- calor, caldera, frío, portería
+    pe_quemadura: () => P(`<rect x="60" y="40" width="16" height="40" fill="#90A4AE"/><path d="M76,48 h40 v10 h-40z" fill="#90A4AE"/><path d="M110,58 v40" stroke="#4FC3F7" stroke-width="8" stroke-dasharray="6 4"/>` + W2(150, 165, { pose: 'carry' }) + `<circle cx="250" cy="80" r="30" fill="#fff" stroke="#263238" stroke-width="4"/><path d="M250,80 v-18 M250,80 l12,6" stroke="#263238" stroke-width="4"/>` + T(250, 136, '10 a 20 min', 13, '#0277BD') + T(250, 152, 'agua fresca', 12, '#0277BD')),
+    pe_caldera_alerta: () => P(caldera(30, 165) + `<circle cx="65" cy="95" r="16" fill="none" stroke="#C62828" stroke-width="3"/>` + W2(220, 165, { pose: 'walk' }) + sup(290, 165, { flip: true }) + bubble(150, 20, '¡Presión alta: aviso!', 150)),
+    pe_hielo: () => P(camara(20, 165, true) + `<g fill="#B3E5FC" stroke="#4FC3F7">${[0, 1, 2, 3, 4].map(i => `<path d="M${160 + i * 28},168 l10,-4 l10,4 l-10,3z"/>`).join('')}</g>` + W2(230, 165, { pose: 'walk', flip: true, shirt: '#1565C0', apron: false, boots: '#263238' }) + T(240, 40, 'Hielo: camina despacio', 12, '#1565C0')),
+    pe_porteria_emerg: () => P(caseta(20, 165) + barrera(110, 160) .replace('<g class="">', '<g transform="rotate(-70 117 125)">') + `<g transform="translate(150,40) scale(.6)">${camion(0, 165, '#C62828')}</g>` + W(70, 165, { vest: true, pose: 'point', helmet: false }) + T(230, 40, 'Paso libre a bomberos', 12) + T(230, 56, 'y ambulancia', 12)),
+    // --- nuevos temas
+    pe_embandejado_patio: () => P(`<rect x="0" y="0" width="320" height="120" fill="#BBDEFB" opacity=".5"/><circle cx="290" cy="30" r="14" fill="#FFC20E"/>` + [0, 1, 2].map(i => `<rect x="${20 + i * 70}" y="${150 - 0}" width="60" height="10" fill="#8D6E63"/>` + [0, 1, 2, 3].map(j => `<rect x="${22 + i * 70}" y="${142 - j * 9}" width="56" height="5" fill="#B0BEC5" stroke="#78909C"/>` + [0, 1, 2, 3].map(k => mosq(28 + i * 70 + k * 12, 140 - j * 9).replace(/rx="5" ry="6"/g, 'rx="2.5" ry="3"')).join('')).join('')).join('') + W2(250, 165, { pose: 'carry', flip: true }) + T(120, 40, 'Patio de embandejado', 13)),
+    pe_caldera_general: () => P(caldera(20, 165) + `<path d="M130,75 h60" stroke="#B0BEC5" stroke-width="8"/><path d="M188,65 l14,10 l-14,10z" fill="#90A4AE"/>` + vapor(140, 70) + autoclaveV(220, 165) + T(160, 30, 'Agua + calor = vapor a presión', 13) + T(160, 186, 'Solo la opera personal autorizado', 11, '#C62828')),
+    pe_admin_planta: () => P(`<rect x="20" y="40" width="80" height="125" fill="#ECEFF1" stroke="#90A4AE" stroke-width="2"/>${T(60, 60, 'OFICINA', 11)}` + W(70, 165, { shirt: '#1565C0', helmet: false, cofia: false }) + `<path d="M110,120 h40" stroke="#0F543A" stroke-width="4"/><path d="M148,112 l10,8 l-10,8z" fill="#0F543A"/>` + W2(200, 165) + `<rect x="230" y="60" width="84" height="70" rx="6" fill="#E8F5E9" stroke="#2E7D32"/>` + T(272, 80, 'Antes de entrar:', 10, '#1B5E20') + T(272, 96, 'cofia, mascarilla', 10, '#1B5E20') + T(272, 110, 'pechera y botas', 10, '#1B5E20')),
+    pe_no_operar: () => P(forklift(20, 165) + cerr(140, 165) + W(260, 165, { shirt: '#1565C0', pose: 'stop', flip: true }) + `<rect x="150" y="14" width="166" height="40" rx="8" fill="#FFEBEE" stroke="#C62828" stroke-width="2"/>` + T(233, 31, 'Sin capacitación ni', 11, '#C62828') + T(233, 46, 'autorización: no se opera', 11, '#C62828')),
+    pe_ventanilla: () => P(`<rect x="20" y="70" width="140" height="95" fill="#ECEFF1" stroke="#90A4AE" stroke-width="2"/><rect x="40" y="86" width="100" height="40" fill="#B3E5FC" stroke="#90A4AE"/><rect x="20" y="126" width="140" height="8" fill="#8D6E63"/>` + W(90, 128, { shirt: '#1565C0', helmet: false, cofia: false, s: .8 }) + W(230, 165, { shirt: '#6D4C41', helmet: false, cofia: false, pose: 'point', flip: true }) + bubble(170, 20, '¿Dónde descargo?', 120) + T(90, 186, 'Atención con calma y respeto', 11))
+  });
+
+  Object.assign(S, {
+    epp_task: () => S.pe_epp_area(),
+    auto_ri: () => P(`<rect x="20" y="30" width="96" height="130" rx="6" fill="#fff" stroke="#0F543A" stroke-width="2"/><rect x="20" y="30" width="96" height="28" rx="6" fill="#0F543A"/>${T(68, 44, 'REGLAMENTO', 9, '#fff')}${T(68, 54, 'INTERNO', 9, '#fff')}` + [0, 1, 2, 3, 4].map(i => `<rect x="30" y="${70 + i * 16}" width="76" height="5" fill="#CFD8DC"/>`).join('') + [['Usar el EPP', 60], ['Seguir procedimientos', 88], ['No operar sin', 116], ['autorización', 130]].map(([l, y]) => txt(144, y, l, 11, '#1B5E20', 'bold', 'start')).join('') + `<path d="M126,56 l4,4 l8,-8" stroke="#2E7D32" stroke-width="3" fill="none"/><path d="M126,84 l4,4 l8,-8" stroke="#2E7D32" stroke-width="3" fill="none"/><path d="M126,112 l4,4 l8,-8" stroke="#2E7D32" stroke-width="3" fill="none"/>` + W2(285, 165, { flip: true })),
+    epp_cert: () => P(guanteMalla(40, 140) + `<rect x="110" y="100" width="40" height="60" rx="4" fill="#FAFAFA" stroke="#90A4AE" stroke-width="2"/><rect x="104" y="150" width="52" height="12" rx="4" fill="#FAFAFA" stroke="#90A4AE" stroke-width="2"/><path d="M176,110 h30 v12 q-15,10 -30,0z" fill="#ECEFF1" stroke="#78909C" stroke-width="2"/>` + `<circle cx="270" cy="80" r="30" fill="#2E7D32" stroke="#1B5E20" stroke-width="3"/><path d="M256,80 l10,10 l18,-20" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M252,104 l-8,30 l14,-8 l8,14 l6,-30z M288,104 l8,30 l-14,-8 l-8,14 l-6,-30z" fill="#2E7D32"/>` + T(270, 160, 'EPP certificado', 12, '#1B5E20') + T(270, 176, 'DS 18/1982', 10)),
+    epp_care: () => P(`<rect x="20" y="40" width="120" height="125" rx="4" fill="#CFD8DC" stroke="#78909C" stroke-width="2"/><rect x="26" y="96" width="108" height="4" fill="#78909C"/>` + `<path d="M40,90 q15,-26 30,0z" fill="#fff" stroke="#90A4AE"/><path d="M84,70 h34 v18 h-34z" fill="#fff" stroke="#90A4AE"/>${T(80, 120, 'Limpio, seco', 10)}${T(80, 134, 'y en su lugar', 10)}` + `<rect x="40" y="140" width="18" height="24" fill="#FAFAFA" stroke="#90A4AE"/><rect x="64" y="140" width="18" height="24" fill="#FAFAFA" stroke="#90A4AE"/>` + W2(250, 165, { flip: true }) + bubble(150, 20, 'La mascarilla es personal', 165)),
+    pe_fuga_vapor: () => P(`<rect x="0" y="70" width="190" height="14" fill="#90A4AE" stroke="#546E7A"/><rect x="120" y="66" width="14" height="22" fill="#78909C"/>` + `<g class="peLat"><path d="M134,78 q30,-6 50,-30 q-10,24 4,34 q-26,-2 -54,-4z" fill="#ECEFF1" opacity=".9"/></g>` + vapor(150, 60) + W2(250, 165, { pose: 'stop', flip: true }) + bubble(176, 20, '¡Fuga de vapor: aviso!', 140) + T(80, 40, 'Cañería de vapor', 12)),
   });
 })();
 
@@ -7161,6 +7253,215 @@ const razonTxt = r => RAZONES[r] ? r + ' (RUT ' + RAZONES[r] + ')' : (r && !/^re
   Object.keys(NORMAS).forEach(k => walk(NORMAS[k]));
   Object.keys(IND_PUESTO).forEach(k => { IND_PUESTO[k] = fx(IND_PUESTO[k]); }); IND_TRANSV = fx(IND_TRANSV);
   { const c = T('induccion').learn.find(l => l.puesto); if (c) c.x = 'Cada puesto tiene sus riesgos. Tu jefatura y prevención te explican los de tu área:<ul>' + Object.values(IND_PUESTO).join('') + '</ul>'; }
+})();
+
+// ===== Perelló · Revisión 28-10-2026 (observaciones de Daniel) =====
+// 1) Los accidentes se pueden evitar: menos énfasis en "avisar después", más en prevenir. 2) Derechos acotados, obligaciones claras:
+// EPP, conductas preventivas y no operar equipos sin capacitación ni autorización. 3) Dibujos que calzan con el texto (sin sierras ni elementos de obra).
+// 4) Vestimenta de la conservera. 5) Charlas nuevas: caldera para ambas plantas, patio de embandejado y dos para administrativos.
+(function () {
+  const T_ = id => TOPICS.find(t => t.id === id);
+  const L = (id, i, o) => { const t = T_(id); if (t && t.learn[i]) Object.assign(t.learn[i], o); };
+  const Q = (id, i, o) => { const t = T_(id); if (!t || !t.quiz[i]) return; const q = t.quiz[i]; if (o.vf !== undefined || o.o) { delete q.vf; delete q.o; delete q.a; delete q.pick; } Object.assign(q, o); };
+  const ul = a => '<ul>' + a.map(x => '<li>' + x + '</li>').join('') + '</ul>';
+
+  // ---------- INDUCCIÓN
+  (function () {
+    const t = T_('induccion'); if (!t) return;
+    const byT = s => t.learn.find(l => l.t === s);
+    const bien = byT('Bienvenido a Perelló'); if (bien) Object.assign(bien, { x: 'Esta es tu inducción de prevención de riesgos: la primera capacitación, obligatoria antes de cualquier otra, seas de planta, administrativo o temporero. Aprenderás a:' + ul(['Trabajar con <b>conductas seguras</b>: los accidentes se pueden evitar.', 'Usar tus <b>EPP</b> correctamente.', 'Reconocer los riesgos de tu puesto y cómo controlarlos.', 'Actuar bien ante una emergencia.']), k: 'Los accidentes se pueden evitar.' });
+    const ley = byT('Ley 16.744: estás protegido'); if (ley) Object.assign(ley, { t: 'Ley 16.744: el seguro laboral', x: 'Todos los trabajadores, también los temporeros, están cubiertos por el seguro de la Ley 16.744 ante accidentes del trabajo, accidentes de trayecto y enfermedades profesionales. Perelló está adherida a la <b>ACHS</b>.', k: 'Seguro laboral: ACHS.' });
+    const acc = byT('Si tienes un accidente'); if (acc) Object.assign(acc, { t: 'Si a pesar de todo ocurre un accidente', x: ul(['Avisa <b>de inmediato</b> a tu jefatura, aunque parezca leve.', 'Somos de la ACHS: ahí te atiendes. Emergencias ACHS: <b>1404</b>.', 'La jefatura y prevención investigan la causa para que no se repita.']), k: 'Aviso inmediato a tu jefatura. ACHS: 1404.' });
+    const epp = byT('Tus EPP'); if (epp) Object.assign(epp, { s: 'pe_epp_todo', x: 'Su uso es <b>obligatorio</b> todo el tiempo que estés expuesto al riesgo:' + ul(['<b>Conservera y proceso:</b> gorro con cofia, mascarilla, pechera blanca, guantes de nitrilo y botas blancas.', '<b>Aseo y sanitización:</b> guantes largos y antiparras.', 'Los entrega la empresa sin costo y con registro. Si se dañan, pide recambio.']), k: 'EPP puesto todo el tiempo de exposición.' });
+    const pue = byT('Los riesgos de TU puesto'); if (pue) pue.x = pue.x.replace('carros y bandejas pesadas,', 'carros y bandejas pesadas, embandejado en el patio (sol y tareas repetitivas),');
+    const der = byT('Tus derechos'); if (der) Object.assign(der, { t: 'Tus obligaciones', s: 'auto_ri', x: ul(['Cumplir el <b>Reglamento Interno</b> de Orden, Higiene y Seguridad.', 'Usar y cuidar el <b>EPP</b>.', 'Seguir los procedimientos y las instrucciones de tu jefatura.', '<b>No operar</b> máquinas, equipos ni vehículos sin capacitación y autorización.', 'Informar las condiciones inseguras.', 'Ante un peligro grave: detén la tarea, aléjate y avisa de inmediato.']), k: 'Cumplir es parte de tu trabajo.' });
+    const com = byT('Tu compromiso: autocuidado'); if (com) Object.assign(com, { x: 'Casi todos los accidentes se pueden evitar. Ocurren cuando nos apuramos, nos saltamos un paso, no usamos el EPP u operamos algo sin saber. Trabajar seguro depende de lo que decides en cada tarea.<br><b>1404 ACHS · 131 SAMU · 132 Bomberos · 133 Carabineros · 134 PDI</b>', k: 'Los accidentes se evitan con decisiones seguras.' });
+    // tarjetas nuevas
+    const iBien = t.learn.indexOf(bien);
+    t.learn.splice(iBien + 1, 0, { s: 'pe_evitable', t: 'Los accidentes se pueden evitar', x: 'Un accidente no es mala suerte: casi siempre hay una causa que se pudo controlar. En Perelló cada uno cumple su parte:' + ul(['Usar el EPP de su zona.', 'Seguir los procedimientos de trabajo.', 'Trabajar sin apuro y con atención.', 'No operar lo que no le corresponde.']), k: 'Prevenir es parte de tu trabajo.' });
+    const iEpp = t.learn.indexOf(epp);
+    t.learn.splice(iEpp + 1, 0, { s: 'pe_no_operar', t: 'No operes lo que no te corresponde', x: 'Ninguna <b>máquina, grúa horquilla, caldera, autoclave o vehículo</b> se opera sin capacitación y autorización de la jefatura. Aunque creas saber hacerlo o sea "un ratito". Si te lo piden y no estás autorizado, di que no y avisa.', k: 'Sin capacitación y autorización, no se opera.' });
+    // preguntas
+    const q184 = t.quiz.find(q => /riesgo grave e inminente/.test(q.q)); if (q184) { delete q184.vf; Object.assign(q184, { q: 'Ves un peligro grave, por ejemplo una fuga de vapor. ¿Qué haces?', s: 'auto_184', o: ['Detengo la tarea, me alejo y aviso de inmediato', 'Sigo trabajando hasta terminar', 'Intento repararlo yo'], a: 0, w: 'Ante un peligro grave: detener, alejarse y avisar de inmediato.' }); }
+    t.quiz.push({ q: 'Te piden mover la grúa horquilla "un ratito" y no tienes autorización. ¿Qué haces?', s: 'pe_no_operar', o: ['No la muevo y aviso a mi jefatura', 'La muevo con cuidado', 'La muevo si nadie mira'], a: 0, w: 'Sin capacitación y autorización, no se opera ningún equipo.' });
+    t.quiz.push({ q: 'Los accidentes del trabajo se pueden evitar.', s: 'pe_evitable', vf: true, w: 'Verdadero. Casi siempre hay una causa que se pudo controlar.' });
+  })();
+
+  // ---------- AUTOCUIDADO
+  L('autocuidado', 5, { x: 'Si ves a un compañero a punto de hacer algo riesgoso, avísale con respeto: "Espera, detén la cinta primero". No es meterse en lo ajeno: es cuidarnos entre todos. Y si te avisan a ti, agradece: te pueden estar salvando una mano.' });
+  L('autocuidado', 7, { t: 'Ante un riesgo grave: detente, aléjate y avisa', x: 'Si ves un riesgo grave e inminente, como una fuga de vapor o de amoníaco, o humo en la sala de caldera: detén la tarea, aléjate y avisa de inmediato a tu jefatura (Código del Trabajo, art. 184 bis).', k: 'Riesgo grave: detente, aléjate y avisa.' });
+  L('autocuidado', 8, { x: 'Cada trabajador debe:' + ul(['Cumplir el Reglamento Interno de Orden, Higiene y Seguridad (Ley 16.744, art. 67).', 'Usar y cuidar el EPP.', 'Seguir los procedimientos de trabajo.', 'No operar equipos sin capacitación ni autorización.']) + 'Si un accidente se debe a negligencia inexcusable del trabajador, la ley permite multarlo (Ley 16.744, art. 70).' });
+  Q('autocuidado', 7, { q: 'Un rack con carga empieza a doblarse. ¿Qué haces?', o: ['Me alejo, alejo a los demás y aviso', 'Sigo trabajando', 'Intento enderezarlo yo'], a: 0, w: 'Ante un riesgo grave: alejarse, advertir y avisar de inmediato.' });
+  Q('autocuidado', 9, { q: 'Un compañero va a sacar una lata trabada sin detener la cinta. ¿Qué haces?', o: ['Le aviso con respeto que detenga la cinta primero', 'Me quedo callado', 'Lo ayudo a sacarla rápido'], a: 0, w: 'Avisar a tiempo es cuidarnos entre todos.' });
+
+  // ---------- PELIGROS
+  L('peligros', 6, { t: 'Conoce los riesgos de tu puesto', x: 'La empresa te informa los riesgos de tu puesto, las medidas preventivas y la forma correcta de trabajar (DS 44). Tu parte: <b>ponerlas en práctica</b> todos los días. Si cambias de puesto o llega una máquina nueva, pregunta antes de empezar.', k: 'Conocer el riesgo y aplicar la medida: así se evita el accidente.' });
+  L('peligros', 8, { x: 'La condición insegura es el peligro que está en el lugar (un resguardo roto). La acción insegura es lo que hacemos (sacar el resguardo para destrabar más rápido). La mayoría de los accidentes se relacionan con una acción insegura. La decisión segura: detenerte y avisar.' });
+
+  // ---------- EPP (reescrita para la conservera)
+  (function () {
+    const t = T_('epp'); if (!t) return;
+    t.thumb = 'pe_epp_todo';
+    t.learn = [
+      { s: 'pe_epp_todo', t: '¿Qué es el EPP?', x: 'Son los Elementos de Protección Personal. En la conservera: <b>gorro con cofia, mascarilla, pechera blanca, guantes de nitrilo y botas blancas</b>. Protegen tu salud y también la inocuidad de los alimentos. Es la última barrera: primero se controla el peligro en la máquina o en el proceso.', k: 'El EPP protege solo si lo usas bien.' },
+      { s: 'pe_epp_give', t: 'Lo que dice la ley', x: 'El empleador entrega los EPP adecuados al riesgo, sin costo, y enseña a usarlos (DS 594, art. 53; Ley 16.744, art. 68). El trabajador <b>debe usarlos</b> todo el tiempo que esté expuesto al riesgo.', k: 'La empresa los entrega; tú los usas.' },
+      { s: 'epp_cert', t: 'EPP certificado', x: 'El EPP debe contar con certificación de calidad (DS 18/1982). Usa el EPP que te entrega la empresa para tu puesto, no reemplazos "hechizos".', k: 'Usa el EPP que entrega la empresa.' },
+      { s: 'pe_epp_area', t: 'Cada área, su EPP', x: ul(['<b>Conservera y proceso:</b> gorro con cofia, mascarilla, pechera blanca, guantes de nitrilo y botas blancas.', '<b>Aseo y sanitización:</b> guantes largos, antiparras y pechera.', '<b>Caldera, autoclaves y hornos:</b> guantes para calor y protector auditivo donde se indique.', '<b>Cámaras de frío:</b> ropa térmica.', '<b>Patio y bodega:</b> chaleco reflectante y zapatos de seguridad.']) + 'Tu jefatura te indica el EPP exacto de tu puesto.', k: 'Pregunta qué EPP exige tu puesto antes de empezar.' },
+      { s: 'pe_epp_revisa', t: 'Revísalo antes de usarlo', x: ul(['Guantes sin hoyos ni cortes.', 'Mascarilla limpia y con elásticos firmes.', 'Cofia sin roturas.', 'Pechera sin rajaduras.', 'Botas con la suela en buen estado.']), k: 'EPP dañado no protege: pide recambio.' },
+      { s: 'pe_epp_ok', t: 'Bien puesto, o no sirve', x: ul(['Todo el pelo dentro de la cofia.', 'La mascarilla cubre <b>nariz y boca</b>, no va en el cuello.', 'Guantes de tu talla.', 'Pechera amarrada y botas puestas.']), k: 'Mal puesto es lo mismo que no tenerlo.' },
+      { s: 'epp_time', t: 'Todo el tiempo que estés expuesto', x: 'Un corte "rapidito" sin guantes basta para lesionarte. Ponte el EPP <b>antes</b> de entrar a la zona o empezar la tarea, y sácatelo solo al salir.', k: 'El accidente no espera a que te pongas el EPP.' },
+      { s: 'epp_care', t: 'Cuídalo', x: 'Mantenlo limpio y guárdalo en su lugar. La mascarilla y los guantes desechables se cambian según se indique y no se prestan. No le hagas cortes ni modificaciones.', k: 'Un EPP cuidado protege mejor.' },
+      { s: 'epp_self', t: 'Autocuidado con el EPP', x: 'La acción insegura típica es sacarse la mascarilla o los guantes "un ratito" por calor o incomodidad. Decide seguro: si te molesta, pide otra talla, pero no trabajes sin él.', k: 'La incomodidad se arregla; una lesión, no.' }
+    ];
+    t.quiz = [
+      { q: '¿Quién debe pagar el EPP que usas?', s: 'pe_epp_give', o: ['La empresa', 'Yo', 'Mitad y mitad'], a: 0, w: 'La empresa lo entrega sin costo.' },
+      { q: '¿Quién usa bien su EPP?', pick: ['pe_epp_mal', 'pe_epp_ok'], a: 1, w: 'Pelo dentro de la cofia, mascarilla en nariz y boca, y guantes.' },
+      { q: 'El EPP elimina el peligro de la tarea.', s: 'pe_epp_todo', vf: false, w: 'Falso. Es la última barrera: protege solo si lo usas bien.' },
+      { q: '¿Cuándo debes usar tu EPP?', s: 'epp_time', o: ['Todo el tiempo que estoy expuesto al riesgo', 'Solo cuando me ve la jefatura', 'Solo si hace frío'], a: 0, w: 'Todo el tiempo de exposición.' },
+      { q: 'La mascarilla puede ir en el cuello mientras trabajo en la línea.', s: 'pe_epp_mal', vf: false, w: 'Falso. Debe cubrir nariz y boca.' },
+      { q: 'Tu guante tiene un hoyo. ¿Qué haces?', s: 'pe_epp_revisa', o: ['Pido recambio', 'Sigo con ese guante', 'Lo parcho con cinta'], a: 0, w: 'EPP dañado no protege: se pide recambio.' },
+      { q: 'En la conservera, ¿qué EPP se usa?', s: 'pe_epp_area', o: ['Cofia, mascarilla, pechera blanca, guantes de nitrilo y botas blancas', 'Solo guantes', 'Casco y chaleco'], a: 0, w: 'Ese es el EPP de la conservera y del proceso.' },
+      { q: 'Los guantes te quedan grandes. ¿Qué haces?', s: 'epp_self', o: ['Pido otra talla', 'Trabajo sin guantes', 'Les corto los dedos'], a: 0, w: 'Se pide la talla correcta; no se trabaja sin EPP.' }
+    ];
+  })();
+
+  // ---------- ORDEN Y ASEO
+  L('orden', 7, { k: 'Línea detenida y bloqueada antes de sanitizar.' });
+  Q('orden', 4, { s: 'pe_espuma' });
+  Q('orden', 5, { q: 'Durante el aseo se puede apuntar la manguera a presión a los tableros eléctricos.', s: 'pe_espuma', vf: false, w: 'Falso. Nunca a tableros, motores ni personas.' });
+
+  // ---------- CARGAS
+  L('cargas', 6, { s: 'pe_bandeja_dos' });
+  Q('cargas', 6, { s: 'pe_bandeja_dos' });
+
+  // ---------- ACCIDENTES (reestructurada: primero prevenir)
+  (function () {
+    const t = T_('accidente'); if (!t) return;
+    t.title = 'Accidentes del trabajo: se pueden evitar'; t.thumb = 'pe_evitable';
+    const g = s => t.learn.find(l => l.s === s);
+    const que = g('accidente_que'), casi = g('accidente_casi'), donde = g('accidente_donde'), comp = g('accidente_companero'), auto = t.learn[t.learn.length - 1];
+    t.learn = [
+      { s: 'pe_evitable', t: 'Los accidentes se pueden evitar', x: 'Un accidente no es mala suerte: casi siempre hay una causa que se pudo controlar. Un paso que se saltó, un EPP que no se usó, una máquina intervenida sin detenerla o un equipo operado sin autorización.', k: 'Prevenir es parte del trabajo de todos.' },
+      { s: 'auto_cadena', t: '¿Por qué ocurren?', x: 'La mayoría empieza con una <b>acción insegura</b> (apurarse, no usar el EPP, meter la mano en una máquina en marcha), muchas veces sumada a una <b>condición insegura</b> (piso con restos, resguardo suelto). Si cortas una de las dos, el accidente no ocurre.', k: 'Corta la cadena antes de que empiece.' },
+      { s: 'pe_autocuidado', t: 'Cómo los evitamos', x: ul(['Usa tu EPP todo el tiempo de exposición.', 'Sigue los procedimientos de trabajo.', 'Detén y bloquea la máquina antes de limpiar o destrabar.', 'No operes equipos sin capacitación ni autorización.', 'Mantén el orden y el aseo.', 'Informa las condiciones inseguras.']), k: 'Cada tarea, hecha segura.' },
+      Object.assign(casi, { k: 'Cada casi accidente muestra dónde prevenir.' }),
+      Object.assign(que, { x: 'Según la Ley 16.744 (art. 5), es toda lesión que sufres a causa o con ocasión del trabajo y que te produce incapacidad o la muerte. En la planta: un corte con cuchillo o lata, una quemadura con vapor, un resbalón en la línea, un lumbago al levantar. Todos se pueden prevenir.' }),
+      { s: 'accidente_avisa', t: 'Si a pesar de todo ocurre', x: 'Avisa <b>de inmediato</b> a tu jefatura, aunque parezca leve. La empresa hace la denuncia (DIAT), te deriva a la ACHS e investiga la causa para que no se repita.', k: 'Aviso inmediato a la jefatura.' },
+      donde, comp,
+      { s: 'accidente_trayecto', t: 'El trayecto también se cuida', x: 'El accidente en el trayecto directo entre tu casa y el trabajo está cubierto por la Ley 16.744. Para evitarlo: respeta las normas de tránsito, sin celular ni audífonos, y camino directo. Si ocurre, avisa de inmediato.', k: 'Camino directo y atento.' },
+      auto
+    ].filter(Boolean);
+    t.quiz = t.quiz.filter(q => !/DIAT|acreditar/.test(q.q));
+    t.quiz.forEach(q => { q.q = q.q.replace('con un tablero', 'con el borde de una lata'); });
+    t.quiz.unshift({ q: 'Los accidentes del trabajo se pueden evitar.', s: 'pe_evitable', vf: true, w: 'Verdadero. Casi siempre hay una causa que se pudo controlar.' },
+      { q: '¿Cuál de estas acciones ayuda a evitar un accidente?', s: 'pe_autocuidado', o: ['Detener y bloquear la máquina antes de destrabar', 'Trabajar más rápido', 'Sacar el resguardo para ver mejor'], a: 0, w: 'Detener y bloquear antes de intervenir evita atrapamientos.' });
+  })();
+
+  // ---------- INCENDIOS Y EMERGENCIAS
+  L('incendios', 1, { s: 'pe_combustibles', k: 'Orden y limpieza: menos combustible para un incendio.' });
+  Q('incendios', 1, { s: 'pe_combustibles' });
+  L('emergencias', 4, { x: 'Quédate quieto hasta que veas bien. No metas las manos: las partes en movimiento siguen girando unos segundos. Apaga tu máquina para que no parta sola cuando vuelva la energía. Camina despacio y espera instrucciones.' });
+
+  // ---------- UV (sin casco de obra)
+  L('uv', 5, { x: ul(['Manga larga y pantalón largo.', 'Jockey con cubrenuca o legionario: protege orejas y cuello.', 'Lentes con filtro UV.']) + 'La empresa entrega estos elementos. Úsalos durante toda la exposición, no solo cuando sientas calor.', k: 'Manga larga, cubrenuca y lentes con filtro UV.' });
+  T_('uv') && T_('uv').quiz.forEach(q => { q.q = q.q.replace('el legionario o cubrenuca bajo el casco', 'el jockey con cubrenuca o legionario'); });
+
+  // ---------- ENFERMEDADES, KARIN (derechos acotados)
+  L('enfermedades', 7, { x: 'Avisa a tu jefatura. La empresa hace la DIEP (Denuncia Individual de Enfermedad Profesional) y te deriva a la ACHS, que evalúa si es de origen laboral.' });
+  (function () {
+    const t = T_('karin'); if (!t) return;
+    const i = t.learn.findIndex(l => l.s === 'karin_resguardo'), j = t.learn.findIndex(l => l.s === 'karin_represalia');
+    if (i >= 0 && j >= 0) { t.learn[i] = { s: 'karin_resguardo', t: 'Protección y sin represalias', x: 'Al recibir una denuncia, la empresa adopta medidas para proteger a la persona afectada, por ejemplo separar espacios o ajustar la jornada. No se permiten represalias contra quien denuncia o declara como testigo de buena fe.', k: 'Primero se protege a la persona afectada.' }; t.learn.splice(j, 1); }
+    t.quiz = t.quiz.filter(q => !/medida de resguardo/.test(q.q));
+  })();
+
+  // ---------- MÁQUINAS, POLVO, CALOR, CALDERA, FRÍO, PORTERÍA, VEHÍCULOS, TMERT
+  L('maquinas', 3, { s: 'pe_parada' }); L('maquinas', 5, { s: 'pe_bloqueo' }); L('maquinas', 7, { s: 'pe_autocuidado' }); Q('maquinas', 4, { s: 'pe_parada' });
+  L('polvo', 4, { s: 'pe_epp_ok' }); L('polvo', 5, { s: 'pe_epp_ok' }); L('polvo', 6, { s: 'enfermedades_polvo' }); Q('polvo', 3, { s: 'pe_epp_ok' }); Q('polvo', 4, { s: 'pe_epp_ok' });
+  L('calor_vapor', 1, { x: 'Los autoclaves verticales trabajan a presión. <b>Solo los opera personal capacitado y autorizado.</b> Antes de abrir: el manómetro debe marcar cero y se purga según el procedimiento. Abrir con presión puede lanzar la tapa o una nube de vapor.' });
+  L('calor_vapor', 5, { s: 'pe_quemadura' }); Q('calor_vapor', 2, { s: 'pe_quemadura' });
+  L('caldera', 5, { s: 'pe_caldera_alerta' }); Q('caldera', 3, { s: 'pe_caldera_alerta' });
+  L('camaras_frio', 3, { s: 'pe_hielo' });
+  L('porteria', 4, { s: 'pe_porteria_emerg' });
+  L('vehiculo_menor', 4, { s: 'camion_conduccion_alcohol' });
+  L('tmert', 0, { s: 'pe_seleccion' }); L('tmert', 2, { s: 'pe_embandejado' }); Q('tmert', 1, { s: 'pe_seleccion' });
+  L('pvd', 0, { x: 'Administrativos, jefaturas y encargados pasan horas frente al computador. Una mala postura no duele el primer día, pero sumada día a día puede terminar en dolor de cuello, espalda, hombros y muñecas. Ajustar tu puesto toma cinco minutos.' });
+  (function () { const t = T_('camion_carga'); if (!t) return; const fx = s => s.replace('los flejes, los flejes y', 'los flejes y').replace('Hay que bajar barras de carga larga largas', 'Hay que bajar una carga larga e incómoda');
+    t.learn.forEach(l => { l.x = fx(l.x); }); t.quiz.forEach(q => { q.q = fx(q.q); }); })();
+
+  // ---------- CHARLAS NUEVAS
+  const nuevo = (t, norma, sec, despuesDe) => { if (T_(t.id)) return; t.sec = sec; NORMAS[t.id] = norma; const i = TOPICS.findIndex(x => x.id === despuesDe); TOPICS.splice(i >= 0 ? i + 1 : TOPICS.length, 0, t);
+    if (typeof SEC_DE === 'object') SEC_DE[t.id] = sec; if (Array.isArray(ORDEN_CC)) { const k = ORDEN_CC.indexOf(despuesDe); ORDEN_CC.splice(k >= 0 ? k + 1 : ORDEN_CC.length, 0, t.id); } };
+
+  nuevo({ id: 'caldera_general', title: 'La caldera: lo que todos deben saber', thumb: 'pe_caldera_general',
+    learn: [
+      { s: 'pe_caldera_general', t: '¿Qué hace la caldera?', x: 'Calienta agua hasta convertirla en <b>vapor a presión</b>. Ese vapor llega por cañerías a los autoclaves, marmitas y otros equipos del proceso. Hay caldera en ambas plantas.', k: 'Agua + calor = vapor a presión.' },
+      { s: 'pe_caldera_ajena', t: 'Solo personal autorizado', x: 'La sala de caldera es de <b>acceso restringido</b>. Solo la opera quien tiene la competencia exigida y la autorización de la empresa. Nadie más entra ni toca válvulas, quemadores o controles.', k: 'Si no eres operador, no entras ni tocas.' },
+      { s: 'pe_autoclave', t: 'Cañerías y equipos con vapor', x: 'Las cañerías de vapor y los equipos calientes queman aunque no se note. No te apoyes ni dejes ropa sobre ellos. Si ves una fuga de vapor, aléjate y avisa de inmediato.', k: 'Fuga de vapor: aléjate y avisa.' },
+      { s: 'pe_caldera_alerta', t: 'Tu parte', x: ul(['No guardes cartón, pallets ni bidones en la sala de caldera.', 'Mantén libre su acceso.', 'Si escuchas ruidos extraños, sientes olor a gas o ves humo: aléjate y avisa a tu jefatura.']), k: 'Acceso libre y aviso inmediato.' }
+    ],
+    quiz: [
+      { q: '¿Quién puede operar la caldera?', s: 'pe_caldera_ajena', o: ['Solo el operador con competencia y autorización', 'Cualquiera del turno', 'El que llegue primero'], a: 0, w: 'Solo el operador autorizado.' },
+      { q: 'Ves una fuga de vapor en una cañería. ¿Qué haces?', s: 'pe_autoclave', o: ['Me alejo y aviso de inmediato', 'La tapo con un paño', 'Sigo trabajando'], a: 0, w: 'El vapor quema: alejarse y avisar.' },
+      { q: 'Se pueden guardar cajas en la sala de caldera si hay espacio.', s: 'pe_caldera_ajena', vf: false, w: 'Falso. La sala de caldera no es bodega.' }
+    ] }, { obj: 'Que todas las personas de ambas plantas conozcan qué es la caldera, sus riesgos y las conductas que les corresponden.',
+    n: ['DS 10/2012 MINSAL: Reglamento de calderas, autoclaves y equipos que utilizan vapor de agua.', 'DS 594/1999 MINSAL: condiciones sanitarias y ambientales básicas en los lugares de trabajo.'] }, 'planta', 'calor_vapor');
+
+  nuevo({ id: 'embandejado', title: 'Patio de embandejado', thumb: 'pe_embandejado_patio',
+    learn: [
+      { s: 'pe_embandejado_patio', t: 'El patio de embandejado', x: 'En el patio se embandeja la mosqueta y se arman los carros para los hornos. Ahí se juntan bandejas, carros, grúa horquilla, sol y tareas repetitivas.', k: 'Orden y atención en el patio.' },
+      { s: 'pe_embandejado', t: 'Mesa y postura', x: ul(['La mesa a la altura de tus codos.', 'Llena la bandeja sobre la mesa, no en el aire.', 'Alterna tareas y haz las pausas.']), k: 'Muñeca recta y pausas.' },
+      { s: 'pe_bandeja_dos', t: 'Bandejas pesadas o apiladas', x: 'Bandejas llenas o apiladas: <b>entre dos o con carro</b>. No apiles sobre la altura de tus hombros y deja los pallets parejos y estables.', k: 'Bandeja pesada: entre dos o con carro.' },
+      { s: 'pe_carro', t: 'Carros', x: 'Empuja el carro, no lo tires. A paso lento, mirando adelante y con las ruedas en buen estado. Cuidado con los pies y con atrapar las manos entre el carro y la pared.', k: 'Empuja, despacio y mirando adelante.' },
+      { s: 'horq_contacto', t: 'Grúa horquilla en el patio', x: 'Camina por la ruta peatonal y busca contacto visual con el operador antes de cruzar. Nunca te pongas bajo una carga levantada ni entre la grúa y un pallet.', k: 'Si no te ve, te puede atropellar.' },
+      { s: 'uv_ropa', t: 'Sol', x: 'Al aire libre: jockey con cubrenuca, manga larga, bloqueador FPS 30 o más y agua seguido, aunque esté nublado.', k: 'Protégete del sol cada día.' }
+    ],
+    quiz: [
+      { q: '¿A qué altura debe quedar la mesa de embandejado?', s: 'pe_embandejado', o: ['A la altura de los codos', 'A la altura de las rodillas', 'Sobre los hombros'], a: 0, w: 'A la altura de los codos.' },
+      { q: '¿Cómo se mueve una bandeja llena y pesada?', s: 'pe_bandeja_dos', o: ['Entre dos o con carro', 'Solo, corriendo', 'Arrastrándola por el piso'], a: 0, w: 'Entre dos o con carro.' },
+      { q: 'Se pueden apilar bandejas sobre la altura de los hombros si es rápido.', s: 'pe_embandejado_patio', vf: false, w: 'Falso. Sobre los hombros se pierde el control de la carga.' },
+      { q: 'Trabajas en el patio un día nublado. ¿Te proteges del sol?', s: 'uv_ropa', o: ['Sí: cubrenuca, manga larga y bloqueador', 'No, está nublado', 'Solo si hace calor'], a: 0, w: 'Las nubes no detienen la radiación UV.' }
+    ] }, { obj: 'Que las personas que trabajan en el patio de embandejado lo hagan de forma segura.',
+    n: ['Norma Técnica TMERT, MINSAL: trabajo repetitivo de extremidades superiores.', 'Código del Trabajo, arts. 211-F a 211-J: manejo manual de carga.', 'Ley 20.096 y DS 594: radiación UV de origen solar.'] }, 'mosqueta', 'mosqueta');
+
+  nuevo({ id: 'admin_planta', title: 'Administrativos en la planta: ingreso seguro', thumb: 'pe_admin_planta',
+    learn: [
+      { s: 'pe_admin_planta', t: 'Antes de entrar a la planta', x: 'Si tu trabajo es en oficina y debes entrar a una zona de proceso, usa el EPP de esa zona: <b>gorro con cofia, mascarilla, pechera y botas</b>. Sin joyas y con las manos lavadas: también cuidamos la inocuidad.', k: 'En la planta, el EPP de la zona.' },
+      { s: 'senaletica_piso', t: 'Por la ruta peatonal', x: 'Camina por las zonas demarcadas, atento a grúas horquilla, carros y camiones. Sin celular mientras caminas por la planta o el patio.', k: 'Ruta peatonal y atención.' },
+      { s: 'pe_no_operar', t: 'No operes nada', x: 'No toques máquinas, tableros, válvulas, la grúa ni los autoclaves, aunque sea para "ayudar". Tampoco destrabes nada: avisa al operador o a la jefatura.', k: 'Si no es tu equipo, no se toca.' },
+      { s: 'pe_cinta_mal', t: 'Respeta las zonas de proceso', x: 'No te acerques a cintas o máquinas en marcha, respeta la señalización y no distraigas a quien opera. Si necesitas algo, espera a que te atiendan.', k: 'Distancia de las máquinas en marcha.' },
+      { s: 'pe_peaton', t: 'Patio y romana', x: 'En el patio y la romana usa chaleco reflectante, camina por la ruta peatonal y busca contacto visual con los conductores antes de cruzar.', k: 'Chaleco y contacto visual.' }
+    ],
+    quiz: [
+      { q: 'Debes entrar a la conservera a revisar algo. ¿Qué haces primero?', s: 'pe_admin_planta', o: ['Me pongo el EPP de la zona', 'Entro rápido así como estoy', 'Entro solo hasta la mitad'], a: 0, w: 'Siempre con el EPP de la zona.' },
+      { q: 'Ves una lata trabada en la cinta. Eres administrativo. ¿Qué haces?', s: 'pe_no_operar', o: ['Aviso al operador o a la jefatura', 'La saco yo', 'Apago la máquina desde el tablero'], a: 0, w: 'No se opera ni se destraba lo que no te corresponde.' },
+      { q: 'Puedo caminar por el patio mirando el celular si voy apurado.', s: 'pe_peaton', vf: false, w: 'Falso. En el patio: ruta peatonal y atención.' }
+    ] }, { obj: 'Que el personal administrativo ingrese y circule de forma segura por las zonas de proceso.',
+    n: ['DS 44/2024 MINTRAB: gestión preventiva de los riesgos laborales.', 'DS 594/1999 MINSAL, art. 53: EPP.', 'DS 977/1996 MINSAL: Reglamento Sanitario de los Alimentos (higiene del personal).'] }, 'admin', 'oficina');
+
+  nuevo({ id: 'admin_atencion', title: 'Atención de choferes, proveedores y visitas', thumb: 'pe_ventanilla',
+    learn: [
+      { s: 'pe_ventanilla', t: 'Atención con calma', x: 'En la oficina, la romana y el despacho atendemos choferes, proveedores y visitas. Da instrucciones claras (dónde estacionar, dónde descargar, por dónde caminar) con calma y respeto.', k: 'Instrucciones claras y buen trato.' },
+      { s: 'pe_registro', t: 'Registro y reglas', x: 'Toda visita se registra en portería y recibe las reglas básicas: EPP, rutas y zonas prohibidas. Si la visita entra a la planta, va acompañada.', k: 'Visita registrada y acompañada.' },
+      { s: 'pe_agresivo', t: 'Si alguien se pone agresivo', x: ul(['Habla con calma y tono bajo.', 'No discutas ni respondas insultos.', 'Mantén distancia y pide apoyo.', 'Informa a tu jefatura.']), k: 'Calma, distancia y apoyo.' },
+      { s: 'blind', t: 'Al salir al patio', x: 'Si sales a coordinar una carga, usa chaleco reflectante, camina por la ruta peatonal y nunca te pongas detrás de un camión que retrocede.', k: 'Si no ves los ojos del chofer, no te ve.' }
+    ],
+    quiz: [
+      { q: 'Un chofer llega molesto por la espera. ¿Qué es lo correcto?', s: 'pe_agresivo', o: ['Mantengo la calma, no discuto y pido apoyo si es necesario', 'Le respondo igual', 'Lo dejo pasar sin registro'], a: 0, w: 'Calma, distancia y apoyo.' },
+      { q: 'Una visita debe entrar a la planta. ¿Cómo entra?', s: 'pe_registro', o: ['Registrada, con EPP y acompañada', 'Sola, para no perder tiempo', 'Sin EPP si es corto'], a: 0, w: 'Registrada, con EPP y acompañada.' },
+      { q: 'Para coordinar una descarga puedo pararme detrás del camión.', s: 'blind', vf: false, w: 'Falso. Atrás está el punto ciego más grande.' }
+    ] }, { obj: 'Que el personal administrativo atienda a terceros de forma segura y respetuosa.',
+    n: ['Ley 21.643 (Ley Karin): violencia en el trabajo ejercida por terceros.', 'DS 44/2024 MINTRAB: gestión preventiva de los riesgos laborales.'] }, 'admin', 'admin_planta');
+
+  // Somos ACHS: los textos dicen ACHS en vez de "organismo administrador (mutualidad o ISL)"
+  const walk = o => { if (Array.isArray(o)) return o.map(walk); if (o && typeof o === 'object') { Object.keys(o).forEach(k => o[k] = walk(o[k])); return o; }
+    return typeof o === 'string' ? o.replace(/tu organismo administrador \(mutualidad o ISL\)/g, 'la ACHS').replace(/el organismo administrador \(mutualidad o ISL\)/g, 'la ACHS').replace(/organismo administrador \(mutualidad o ISL\)/g, 'ACHS').replace(/mi organismo administrador/g, 'la ACHS').replace(/tu organismo administrador/g, 'la ACHS').replace(/\(mutualidad o ISL\)/g, '(ACHS)').replace(/el organismo administrador/g, 'la ACHS') : o; };
+  TOPICS.forEach(walk);
+  { const t = T_('induccion'); const tm = t && t.learn.find(l => /TMERT/.test(l.t)); if (tm) tm.s = 'pe_seleccion'; }
+  L('caldera_general', 2, { s: 'pe_fuga_vapor' }); L('calor_vapor', 3, { s: 'pe_fuga_vapor' }); Q('calor_vapor', 3, { s: 'pe_fuga_vapor' }); L('orden', 5, { s: 'orden_scraps' }); Q('caldera_general', 1, { s: 'pe_fuga_vapor' });
+  // ---------- textos de dibujos heredados de otras plataformas
+  const fxS = s => s.replace(/FERRETERÍA/g, 'PERELLÓ').replace(/Casco \(en obra\)/g, 'Casco (si se exige)').replace(/Perfiles de acero/g, 'Canto vivo').replace(/IARC Grupo 1/g, '').replace(/Rebajadora/g, '').replace(/Mutualidad o ISL/g, 'ACHS').replace(/Organismo admin\./g, 'ACHS');
+  Object.keys(S).forEach(k => { const f = S[k]; S[k] = function () { return fxS(f.apply(this, arguments)); }; });
 })();
 
 function filasEmpresa(D, TM) {
