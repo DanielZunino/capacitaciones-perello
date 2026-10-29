@@ -67,4 +67,30 @@
       { k: 'Personal de Planta', t: 'Personal de Planta', d: 'Contrato todo el año (incluye oficina)', ic: '🏭' },
       { k: 'Personal de Temporada', t: 'Personal de Temporada', d: 'Contrato solo por la temporada', ic: '🍂' });
   } catch (e) {}
+
+  // 6) Solo Perelló: no mencionar que los EPP son "sin costo" (sin afirmar lo contrario) y preguntas nuevas de EPP y piso mojado
+  try {
+    const fix = s => s
+      .replace(/Los entrega la empresa sin costo y con registro\./g, 'La empresa los entrega con registro.')
+      .replace(/EPP sin costo a cargo del empleador/g, 'entrega de EPP')
+      .replace(/EPP sin costo \(Ley 16\.744\)/g, 'EPP obligatorio (Ley 16.744)')
+      .replace(/,? ?<b>sin costo<\/b>/g, '')
+      .replace(/, sin costo,/g, ',')
+      .replace(/, libres de costo,/g, '')
+      .replace(/,? sin costo para (el trabajador|ti)/g, '')
+      .replace(/(?<!atiendes,) sin costo/g, '');
+    const walk = o => { if (typeof o === 'string') return fix(o); if (Array.isArray(o)) { o.forEach((v, i) => o[i] = walk(v)); return o; } if (o && typeof o === 'object') { Object.keys(o).forEach(k => o[k] = walk(o[k])); return o; } return o; };
+    TOPICS.forEach(walk);
+    try { if (typeof NORMAS === 'object') walk(NORMAS); } catch (e) {}
+    try { if (typeof NORMA_GENERAL === 'object') walk(NORMA_GENERAL); } catch (e) {}
+    ['camion_carga_epp', 'c5ep_cuida'].forEach(k => { const f = S[k]; if (typeof f === 'function' && !f.__pe6) { S[k] = function () { return fix(f.apply(this, arguments)); }; S[k].__pe6 = true; } });
+    const tp = id => TOPICS.find(t => t.id === id);
+    const rq = (id, re, nq) => { const t = tp(id); if (!t) return; const i = t.quiz.findIndex(q => re.test(q.q)); if (i >= 0) t.quiz[i] = Object.assign({ s: t.quiz[i].s }, nq); };
+    rq('induccion', /Quién paga/i, { q: 'Notas que tu guante está roto o tu mascarilla dañada. ¿Qué haces?', s: 'pe_epp_todo', o: ['Aviso a mi jefatura y pido el cambio antes de seguir trabajando', 'Sigo trabajando y lo cambio al final del turno', 'Me lo saco y trabajo sin él'], a: 0, w: 'Un EPP dañado no protege: avisa y pide el cambio antes de seguir.' });
+    rq('epp', /Quién debe pagar/i, { q: '¿Cuándo debes usar tu EPP?', o: ['Todo el tiempo que estés expuesto al riesgo', 'Solo cuando está la jefatura', 'Solo si la tarea es larga'], a: 0, w: 'El EPP se usa todo el tiempo que estés expuesto al riesgo.' });
+    rq('camion_carga', /lo paga el trabajador/i, { q: 'Si son pocas cajas, puedo descargar sin guantes ni zapatos de seguridad.', vf: false, w: 'Falso. El EPP se usa siempre que estés expuesto al riesgo, aunque la tarea sea corta.' });
+    rq('induccion', /charco/i, { q: 'En la línea el piso suele estar mojado. ¿Cómo debes desplazarte?', o: ['Caminando, sin correr, con botas antideslizantes y por los pasillos', 'Rápido, para no perder tiempo', 'Con zapatillas, que son más cómodas'], a: 0, w: 'En piso mojado: camina sin correr, con botas antideslizantes y por los pasillos.' });
+    rq('pisos', /charco/i, { q: 'Vas atrasado a tu puesto y el pasillo está mojado. ¿Qué haces?', o: ['Camino sin correr, mirando dónde piso', 'Corro para llegar a la hora', 'Paso por encima de la cinta para acortar camino'], a: 0, w: 'Llegar un minuto tarde es mejor que una caída: en piso mojado, nunca corras.' });
+    const fp = S.pe_piso; if (typeof fp === 'function' && !fp.__pe6) { S.pe_piso = function () { return fp.apply(this, arguments).replace('Agua fuera del lavado: seca y avisa', 'Piso mojado: camina, no corras'); }; S.pe_piso.__pe6 = true; }
+  } catch (e) {}
 })();
