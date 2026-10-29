@@ -242,4 +242,98 @@
       temaAprobado.__pe = true;
     }
   } catch (e) {}
+
+
+  // 9) Grúa horquilla con bins plásticos (no cajas ni tarros) y cintas de selección: lo prohibido es INTERVENIR equipos en movimiento
+  try {
+    // bin plástico agrícola con fruta; x = izquierda, y = base, w = ancho, h = alto
+    const binP = (x, y, w, h, sinFruta) => {
+      const n = v => (+v).toFixed(1), ft = Math.max(3, h * .12), top = y - h;
+      let g = `<rect x="${n(x + 3)}" y="${n(y - ft)}" width="${n(w * .18)}" height="${n(ft)}" fill="#0D47A1"/><rect x="${n(x + w - 3 - w * .18)}" y="${n(y - ft)}" width="${n(w * .18)}" height="${n(ft)}" fill="#0D47A1"/>`;
+      g += `<path d="M${n(x)},${n(y - ft)} h${n(w)} l-1.5,${n(-(h - ft - 3))} h${n(-(w - 3))} z" fill="#1E88E5" stroke="#0D47A1" stroke-width="1.1"/>`;
+      for (let i = 1; i < 3; i++) g += `<line x1="${n(x + 1)}" y1="${n(y - ft - (h - ft - 3) * i / 3)}" x2="${n(x + w - 1)}" y2="${n(y - ft - (h - ft - 3) * i / 3)}" stroke="#1565C0" stroke-width="1"/>`;
+      for (let i = 1; i < 4; i++) g += `<rect x="${n(x + w * i / 4 - 1.5)}" y="${n(top + 6)}" width="3" height="${n(Math.max(2, h - ft - 9))}" rx="1.2" fill="#1565C0"/>`;
+      g += `<rect x="${n(x - 1)}" y="${n(top)}" width="${n(w + 2)}" height="4" rx="1.2" fill="#1565C0" stroke="#0D47A1" stroke-width=".8"/>`;
+      if (!sinFruta) for (let i = 0; i < Math.max(2, Math.floor(w / 9)); i++) g += `<circle cx="${n(x + 5 + i * 9)}" cy="${n(top - 1.5)}" r="3.4" fill="${i % 2 ? '#E64A19' : '#C62828'}" stroke="#7F1D0B" stroke-width=".6"/>`;
+      return g;
+    };
+    window.PE_BIN = binP;
+    if (typeof carga === 'function' && !carga.__pe) {
+      const C0 = carga;
+      carga = function (kind, x0, y) {
+        if (kind === 'alta') return binP(x0, y, 48, 28) + binP(x0, y - 28, 48, 28);
+        if (!kind || kind === 'vacio' || kind === 'vacia') return C0.apply(this, arguments);
+        return binP(x0, y, 48, 30);
+      };
+      carga.__pe = true;
+    }
+    if (typeof forklift === 'function' && !forklift.__pe) {
+      const F1 = forklift;
+      forklift = function (x, y, o) {
+        o = o || {}; if (!o.load) return F1(x, y, o);
+        const lift = o.lift || 8, h = Math.max(22, Math.min(34, +o.load || 26));
+        const b = binP(x + 82, y - lift - 5, 38, h);
+        return F1(x, y, Object.assign({}, o, { load: 0 })) + (o.flip ? `<g transform="translate(${2 * x + 120},0) scale(-1,1)">${b}</g>` : b);
+      };
+      forklift.__pe = true;
+    }
+
+    // Textos: seleccionar en la cinta en movimiento es la tarea; lo que no se hace es intervenirla en movimiento
+    const NO_INTERV = 'No intervengas equipos en movimiento';
+    const CAMBIOS = [
+      ['Con resguardo y parada de emergencia. Nunca la mano con la cinta en marcha.', 'Con resguardo en rodillos y transmisión, parada de emergencia a mano y todo en orden. Seleccionar en la cinta es tu trabajo; destrabar, limpiar o reparar se hace con la cinta detenida y bloqueada.'],
+      ['<li><b>Nunca</b> metas la mano con la máquina en marcha, aunque sea "un segundo".</li>', '<li><b>No intervengas equipos en movimiento</b>: seleccionar en la cinta es tu tarea, pero destrabar, limpiar, ajustar o reparar se hace con la máquina detenida y bloqueada, aunque sea "un segundo".</li><li>Manos fuera de rodillos, poleas, cadenas y cerradoras.</li>'],
+      ['Primero detener y bloquear; después la mano.', 'No intervengas equipos en movimiento: primero detener y bloquear.'],
+      ['Nunca la mano con la máquina en marcha', NO_INTERV],
+      ['Una lata trabada, una fruta atascada o algo que cayó en la cinta: <b>nunca se saca con la máquina andando</b>.', 'Seleccionar fruta o latas desde la cinta en movimiento es parte del trabajo. Lo que <b>nunca</b> se hace es <b>intervenir</b> la máquina en movimiento: una lata trabada, una fruta atascada en un rodillo o algo que cayó dentro de la máquina no se saca con la máquina andando.'],
+      ['Primero detener; después meter la mano.', 'Para intervenir: detener y bloquear primero.'],
+      ['"Espera, detén la cinta primero"', '"Espera, detén y bloquea antes de destrabar"'],
+      ['Las líneas tienen cintas y rodillos: <b>nada suelto</b>, pelo tomado y manos fuera de los puntos de atrapamiento.', 'En las líneas seleccionas desde la cinta en movimiento: esa es tu tarea. Lo que <b>no se hace</b> es intervenirla en movimiento (destrabar, limpiar o ajustar): para eso se detiene y se bloquea. <b>Nada suelto</b>, pelo tomado y manos fuera de rodillos y puntos de atrapamiento.']
+    ];
+    const fx = v => { if (typeof v !== 'string') return v; CAMBIOS.forEach(([a, b]) => { if (v.indexOf(a) >= 0) v = v.split(a).join(b); }); return v; };
+    const recorrer = (o, d) => { if (!o || typeof o !== 'object' || d > 6) return; Object.keys(o).forEach(k => { const v = o[k]; if (typeof v === 'string') o[k] = fx(v); else if (v && typeof v === 'object') recorrer(v, d + 1); }); };
+    [typeof TOPICS !== 'undefined' ? TOPICS : null, typeof NORMAS !== 'undefined' ? NORMAS : null].forEach(x => recorrer(x, 0));
+
+    // Dibujos de la cinta
+    if (typeof S === 'object' && window.WC) {
+      const W2 = window.WC;
+      const envolver = (k, f) => { const o = S[k]; if (typeof o !== 'function' || o.__pe9) return; S[k] = function () { return f(o.apply(this, arguments)); }; S[k].__pe9 = true; };
+      const fin = (svg, extra) => svg.replace(/<\/svg>\s*$/, extra + '</svg>');
+      // MAL: transmisión sin resguardo, mano en la polea con la cinta andando, cables pelados, latas en el piso y sin parada de emergencia
+      envolver('pe_cinta_mal', svg => {
+        const w = W2(200, 165, { pose: 'point', flip: true, shirt: '#ECEFF1' });
+        svg = svg.split(w).join('').replace(/<circle cx="168" cy="118" r="18" fill="none" stroke="#C62828" stroke-width="3"\/>/, '');
+        svg = svg.replace('Nunca la mano con la cinta en marcha', 'Intervenir la cinta en movimiento');
+        let x = '';
+        x += `<rect x="226" y="122" width="34" height="22" rx="3" fill="#78909C" stroke="#455A64"/><circle cx="236" cy="128" r="8" fill="#B0BEC5" stroke="#37474F" stroke-width="2"/><circle cx="236" cy="128" r="2.5" fill="#37474F"/>`;
+        x += `<g class="an-spin" style="transform-origin:236px 128px;transform-box:view-box"><path d="M236,120 v16 M228,128 h16" stroke="#37474F" stroke-width="2"/></g>`;
+        x += `<path d="M236,120 L254,124 M236,136 L254,140" stroke="#263238" stroke-width="2" stroke-dasharray="3 2"/><circle cx="254" cy="132" r="6" fill="#90A4AE" stroke="#37474F" stroke-width="1.5"/>`;
+        x += `<path d="M258,140 q14,10 8,22 q-6,12 10,14" fill="none" stroke="#212121" stroke-width="3"/><path d="M265,158 l4,3" stroke="#E65100" stroke-width="3"/><path d="M268,168 l3,2" stroke="#E65100" stroke-width="3"/>`;
+        x += `<g class="an-flash"><path d="M276,160 l5,-7 l1,6 l6,-3 l-4,7 l6,2 l-8,2" fill="#FFEB3B" stroke="#F57F17" stroke-width="1"/></g>`;
+        x += `<g transform="rotate(80 70 168)"><rect x="64" y="160" width="12" height="16" rx="2" fill="#CFD8DC" stroke="#78909C"/><rect x="64" y="164" width="12" height="8" fill="#C62828"/></g><g transform="rotate(-70 112 170)"><rect x="106" y="162" width="12" height="16" rx="2" fill="#CFD8DC" stroke="#78909C"/><rect x="106" y="166" width="12" height="8" fill="#C62828"/></g>`;
+        x += `<ellipse cx="150" cy="172" rx="18" ry="3" fill="#E57373" opacity=".5"/>`;
+        x += W2(286, 165, { pose: 'point', flip: true, shirt: '#ECEFF1' });
+        x += `<circle cx="248" cy="128" r="17" fill="none" stroke="#C62828" stroke-width="3"/>`;
+        return fin(svg, x);
+      });
+      envolver('auto_mal', () => S.pe_cinta_mal());
+      // BIEN: resguardo, parada de emergencia y trabajadora seleccionando con la cinta andando
+      envolver('pe_cinta_ok', svg => svg.replace('Resguardo y parada de emergencia', 'Resguardo, orden y parada de emergencia'));
+      envolver('auto_companero', svg => {
+        svg = svg.replace('¡Espera! Detén la cinta', '¡Detén y bloquea primero!');
+        return fin(svg, `<g transform="rotate(35 128 116)"><rect x="122" y="104" width="12" height="16" rx="2" fill="#CFD8DC" stroke="#78909C"/><rect x="122" y="108" width="12" height="8" fill="#C62828"/></g><g class="an-flash"><circle cx="128" cy="92" r="8" fill="#D7262B" stroke="#fff" stroke-width="2"/><text x="128" y="96" font-size="11" font-weight="bold" text-anchor="middle" fill="#fff" font-family="Arial">!</text></g>`);
+      });
+      envolver('accidente_auto', svg => svg.replace(/font-size="\d+"([^>]*>)¡Rápido!</, 'font-size="11"$1¡Destrabo en marcha!<').replace(/font-size="\d+"([^>]*>)Detengo primero</, 'font-size="11"$1Detengo y bloqueo<'));
+      // grúa horquilla grande: lo que va en las horquillas pasa a ser bins plásticos
+      const BINS = svg => typeof svg !== 'string' ? svg : svg.replace(/(<path d="M([\d.-]+),([\d.-]+) h52 l2,3 h-54z" fill="#37474F"\/>)(<rect x="[\d.-]+" y="[\d.-]+" width="48" height="3" fill="#D7B98E"[^]*?)(?=<g|<\/g>|<animateTransform|<circle|<ellipse|<line|<polyline|$)/g, (m, fork, X, FY, load) => {
+        const px = +((load.match(/^<rect x="([\d.-]+)"/) || [])[1] || (+X + 3)), x0 = px, fy = +FY; let keep = '', used = '';
+        const els = load.match(/<rect[^>]*\/>|<path[^>]*\/>|<text[^>]*>[^<]*<\/text>/g) || [];
+        els.forEach(e => { const c = e.match(/\sx="([\d.-]+)"[^>]*?\sy="([\d.-]+)"|d="M([\d.-]+),([\d.-]+)/); const ex = c ? +(c[1] || c[3]) : NaN, ey = c ? +(c[2] || c[4]) : NaN;
+          if (ex >= x0 - 12 && ex <= x0 + 60 && ey >= fy - 90 && ey <= fy + 2) used += e; else keep += e; });
+        const alto = els.length > 14 ? 2 : 1;
+        return fork + (alto === 2 ? binP(x0, fy, 48, 28, true) + binP(x0, fy - 28, 48, 28) : binP(x0, fy, 48, 30)) + keep;
+      });
+      Object.keys(S).forEach(k => { const f = S[k]; if (typeof f !== 'function' || f.__peB) return; S[k] = function () { return BINS(f.apply(this, arguments)); }; S[k].__peB = true; });
+    }
+  } catch (e) {}
 })();

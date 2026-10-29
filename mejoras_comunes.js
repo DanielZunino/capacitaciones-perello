@@ -11,6 +11,34 @@
 // Se carga desde https://danielzunino.github.io/capacitaciones-perello/mejoras_comunes.js en todos los portales.
 (function () {
   const M = window.MARCA || {};
+  // Marca por portal (si el portal no la define) y logo real de la empresa para camiones y grúas
+  const MCFG = { 'capacitaciones-prosip': { nombre: 'PROSIP', c1: '#3A3A3A', c2: '#9E9E9E', fachada: 'PLANTA PROSIP', corto: 'PROSIP' },
+    'capacitaciones-plaza': { nombre: 'Constructora Plaza', c1: '#B21E35', c2: '#2B2B2E', fachada: 'BODEGA PLAZA', corto: 'PLAZA' },
+    'capacitaciones-oym': { nombre: 'OYM Center', c1: '#0B7A35', c2: '#E0301E', fachada: 'OYM CENTER', corto: 'OYM' },
+    'capacitaciones-constructor': { nombre: 'Constructor Center', c1: '#0039A6', c2: '#DC281D', fachada: 'FERRETERÍA', corto: 'CONSTRUCTOR' } };
+  const PORTAL = location.pathname.split('/')[1] || '', MC = MCFG[PORTAL] || null;
+  if (!M.nombre && MC) Object.assign(M, MC, { fuente: 'Arial' });
+  const LOGO = (() => { try { const i = document.querySelector('.logoBar img'); return i ? { src: i.src, ar: (i.naturalWidth && i.naturalHeight) ? i.naturalWidth / i.naturalHeight : 0 } : null; } catch (e) { return null; } })();
+  const LOGO_AR = { 'capacitaciones-perello': 3.02, 'capacitaciones-prosip': 6.21, 'capacitaciones-plaza': 1.22, 'capacitaciones-oym': 1.25, 'capacitaciones-constructor': 1.99 };
+  if (LOGO && !LOGO.ar) LOGO.ar = LOGO_AR[location.pathname.split('/')[1] || ''] || 2;
+  // placa blanca con el logo (mantiene la proporción); cx, cy = centro; w, h = espacio máximo
+  const placaLogo = (cx, cy, w, h) => {
+    if (!LOGO || !LOGO.src) return '';
+    const p = 1.6; let iw = w - 2 * p, ih = h - 2 * p; if (iw / ih > LOGO.ar) iw = ih * LOGO.ar; else ih = iw / LOGO.ar;
+    const W = iw + 2 * p, H = ih + 2 * p, n = v => (+v).toFixed(1);
+    return `<g class="mjLogoG"><rect x="${n(cx - W / 2)}" y="${n(cy - H / 2)}" width="${n(W)}" height="${n(H)}" rx="${n(Math.min(3, H / 4))}" fill="#fff" stroke="${M.c1 || '#263238'}" stroke-width=".8"/><image class="mjLogo" href="${LOGO.src}" x="${n(cx - iw / 2)}" y="${n(cy - ih / 2)}" width="${n(iw)}" height="${n(ih)}" preserveAspectRatio="xMidYMid meet"/></g>`;
+  };
+  window.MJ_PLACA = placaLogo;
+  // si el dibujo quedó espejado (camión o grúa mirando al otro lado), el logo se endereza
+  try {
+    const enderezar = () => document.querySelectorAll('image.mjLogo:not([data-fx])').forEach(im => {
+      im.setAttribute('data-fx', '1'); let neg = false, el = im.parentNode;
+      while (el && el.tagName && el.tagName.toLowerCase() !== 'svg') { try { const t = el.transform && el.transform.baseVal && el.transform.baseVal.consolidate(); if (t) { const m = t.matrix; if (m.a * m.d - m.b * m.c < 0) neg = !neg; } } catch (e) {} el = el.parentNode; }
+      if (neg) { const cx = +im.getAttribute('x') + im.getAttribute('width') / 2; im.setAttribute('transform', `translate(${(2 * cx).toFixed(1)},0) scale(-1,1)`); }
+    });
+    new MutationObserver(enderezar).observe(document.documentElement, { childList: true, subtree: true });
+    window.MJ_ENDEREZAR = enderezar;
+  } catch (e) {}
   // ---------- 1) Pronunciación chilena de siglas
   const PRON = [
     [/\bE P P\b/g, 'e pe pe'], [/\bEPP\b/g, 'e pe pe'], [/\bA C H S\b/g, 'achs'], [/\bACHS\b/g, 'achs'], [/\bIST\b/g, 'i ese te'], [/\bISL\b/g, 'i ese ele'],
@@ -45,10 +73,38 @@
         o = o || {}; const g0 = F0(x, y, o); let a = '';
         a += `<rect x="${x + 36}" y="${y - 86}" width="8" height="6" rx="2" fill="#263238"/><g class="mjBaliza"><circle cx="${x + 40}" cy="${y - 88}" r="5" fill="#FF8F00"/><circle cx="${x + 40}" cy="${y - 88}" r="10" fill="#FFB300" opacity=".35"/></g>`;
         if (o.rev !== false) a += `<g class="mjAlarma">${[1, 2, 3].map(i => `<path d="M${x - 4 - i * 6},${y - 46 - i * 4} a${i * 7},${i * 7} 0 0 0 0,${14 + i * 8}" stroke="#FF6F00" stroke-width="2.4" fill="none" stroke-linecap="round"/>`).join('')}</g>`;
-        if (M.nombre) a += `<rect x="${x + 14}" y="${y - 37}" width="46" height="12" rx="3" fill="${M.c1 || '#263238'}"/><text x="${x + 37}" y="${y - 28}" font-size="8" font-weight="bold" text-anchor="middle" fill="#fff" font-family="${M.fuente || 'Arial'}"${o.flip ? ` transform="translate(${2 * x + 74},0) scale(-1,1)"` : ''}>${M.nombre}</text>`;
+        if (LOGO && LOGO.src) a += LOGO.ar < 2.2 ? placaLogo(x + 38, y - 30.5, 52, 17) : placaLogo(x + 38, y - 29.5, 52, 14);
+        else if (M.nombre) a += `<rect x="${x + 14}" y="${y - 37}" width="46" height="12" rx="3" fill="${M.c1 || '#263238'}"/><text x="${x + 37}" y="${y - 28}" font-size="8" font-weight="bold" text-anchor="middle" fill="#fff" font-family="${M.fuente || 'Arial'}"${o.flip ? ` transform="translate(${2 * x + 74},0) scale(-1,1)"` : ''}>${M.nombre}</text>`;
         return g0 + (o.flip ? `<g transform="translate(${2 * x + 120},0) scale(-1,1)">${a}</g>` : a);
       };
       forklift.__mejor = true;
+    }
+  } catch (e) {}
+
+  // ---------- 2b) Logo real de la empresa en todos los camiones (cabina y cortina) y en la grúa horquilla grande
+  try {
+    if (LOGO && LOGO.src && typeof RAMPLA === 'function' && !RAMPLA.__mj) {
+      const R0 = RAMPLA;
+      RAMPLA = function (L, o) {
+        o = o || {}; L = L || 150; let g = R0.call(this, L, o);
+        // cortina cerrada: el letrero de texto se cambia por el logo
+        g = g.replace(/<g transform="translate\([\d.-]+,-99\)"><rect width="[\d.]+" height="26" rx="6"[^]*?<\/text><\/g>/, '');
+        if (!o.open) g = g.replace(/(<rect x="5" y="-66" width="[\d.]+" height="4" fill="#DC281D"\/>)/, `$1${placaLogo(L / 2, -84, Math.min(L - 30, 110), 32)}`);
+        const c = L + 2;   // cabina: logo en la puerta
+        return g + placaLogo(c + 27, -44, 30, 11);
+      };
+      RAMPLA.__mj = true;
+    }
+    if (LOGO && LOGO.src && typeof grua === 'function' && !grua.__mj) {
+      const G0 = grua;
+      grua = function (x, y, o) {
+        o = o || {}; const g0 = G0(x, y, o), s = o.s || 1;
+        let a = LOGO.ar < 2.2 ? placaLogo(x + 30, y - 48.5, 40, 16) : placaLogo(x + 30, y - 48, 40, 14);
+        if (s !== 1) a = `<g transform="translate(${x},${y}) scale(${s}) translate(${-x},${-y})">${a}</g>`;
+        if (o.flip) a = `<g transform="translate(${2 * x + 160 * s},0) scale(-1,1)">${a}</g>`;
+        return g0 + a;
+      };
+      grua.__mj = true;
     }
   } catch (e) {}
 
@@ -104,7 +160,23 @@
         // ✓ y ✗ que laten
         svg = svg.replace(/(<circle cx="[\d.]+" cy="[\d.]+" r="[\d.]+" fill="(?:#2E7D32|#D7262B)" stroke="#fff" stroke-width="3"\/>)(<path [^>]*\/>)/g, '<g class="mjPop">$1$2</g>');
         // logo de la empresa en la cortina de los camiones
-        if (M.nombre && svg.indexOf('>' + M.nombre + '</text>') < 0) svg = svg.replace(/<rect x="5" y="-104" width="([\d.]+)" height="58" fill="#123F8C"\/>/g, (m, w) => { const L = +w + 11, ww = Math.min(L - 30, 84); return m + `<g transform="translate(${(L / 2 - ww / 2).toFixed(1)},-99)">${logoCortina(ww)}</g><g class="mjInter"><rect x="-4" y="-50" width="5" height="5" rx="1" fill="#FFB300"/></g>`; });
+        if (!(LOGO && LOGO.src) && M.nombre && svg.indexOf('>' + M.nombre + '</text>') < 0) svg = svg.replace(/<rect x="5" y="-104" width="([\d.]+)" height="58" fill="#123F8C"\/>/g, (m, w) => { const L = +w + 11, ww = Math.min(L - 30, 84); return m + `<g transform="translate(${(L / 2 - ww / 2).toFixed(1)},-99)">${logoCortina(ww)}</g><g class="mjInter"><rect x="-4" y="-50" width="5" height="5" rx="1" fill="#FFB300"/></g>`; });
+        // letreros de edificios con el nombre de la empresa del portal (no de otra)
+        if (MC) {
+          if (PORTAL !== 'capacitaciones-prosip') svg = svg.replace(/>PROSIP<\/text>/g, '>' + MC.corto + '</text>');
+          svg = svg.replace(/(font-size=")12(" font-weight="bold" text-anchor="middle" fill="#fff" font-family="Arial">)FERRETERÍA</g, (m, a, b) => a + (MC.fachada.length > 12 ? '10' : '12') + b + MC.fachada + '<');
+          svg = svg.replace(/>FERRETERÍA</g, '>' + (MC.fachada.length <= 11 ? MC.fachada : MC.corto) + '<');
+          if (PORTAL !== 'capacitaciones-constructor') svg = svg.replace(/((?:height="14"|height="20" rx="3") fill="#37474F"\/><rect x="[\d.-]+" y="[\d.-]+" width="[\d.]+" height="[35]" fill=")#DC281D"/g, `$1${MC.c1}"`);
+          if (PORTAL !== 'capacitaciones-constructor') svg = svg.replace(/(<rect x="[\d.-]+" y="[\d.-]+" width="[\d.]+" height="18" fill=")#0039A6("\/><rect x="[\d.-]+" y="[\d.-]+" width="[\d.]+" height="5" fill=")#DC281D(")/g, `$1${MC.c1}$2${MC.c2}$3`);
+        }
+        if (LOGO && LOGO.src) {
+          // camión de caja blanca (furgón): logo en el costado
+          svg = svg.replace(/<rect x="([\d.-]+)" y="([\d.-]+)" width="128" height="44" rx="2" fill="#ECEFF1" stroke="#90A4AE" stroke-width="1.5"\/>/g, (m, x, y) => m + placaLogo(+x + 64, +y + 15, 96, 24));
+          // grúa horquilla grande (de perfil): logo en el chasis, sobre la franja negra
+          svg = svg.replace(/(<path d="M([\d.-]+),([\d.-]+) V[\d.-]+ q0,-6 6,-6 H[\d.-]+ l6,8 H[\d.-]+ q8,0 10,8 l4,24 V[\d.-]+ z" fill="#FFC20E" stroke="#9A7400" stroke-width="1.4"\/>)/g, (m, p, X, Y) => { const x = +X - 6, y = +Y + 18; return p + (LOGO.ar < 2.2 ? placaLogo(x + 30, y - 48.5, 40, 16) : placaLogo(x + 30, y - 48, 40, 14)); });
+          // grúa horquilla vista desde atrás: logo en el contrapeso
+          svg = svg.replace(/<rect x="([\d.-]+)" y="([\d.-]+)" width="92" height="36" rx="6" fill="#FFC20E" stroke="#9A7400" stroke-width="1.4"\/>/g, (m, x, y) => m + placaLogo(+x + 46, +y + 7, 50, 10));
+        }
         return svg;
       };
       Object.keys(S).forEach(k => { const f = S[k]; if (typeof f !== 'function') return; S[k] = function () { return mejorar(f.apply(this, arguments)); }; });
