@@ -189,4 +189,57 @@
       ];
     }
   } catch (e) {}
+
+
+  // 8) Repaso rápido: si el tema ya está aprobado, se reconoce aunque en este teléfono no esté guardada la clave
+  //    (se busca también lo aprobado en este teléfono y, si hace falta, se pide la clave una vez y queda guardada)
+  try {
+    if (typeof temaAprobado === 'function' && !temaAprobado.__pe) {
+      const vigente = ap => ap && (st.topic.id === 'induccion' ? venceInduccion(ap.fecha) - Date.now() >= 30 * 864e5 : venceAprob(ap.tema_id || st.topic.id, ap.fecha) > Date.now());
+      const rk = r => String(r || '').replace(/[^0-9kK]/g, '').toUpperCase();
+      const local = () => {
+        try { const R = JSON.parse(localStorage.getItem('perello_cap_ruta') || 'null'); if (R && rk(R.rut) === rk(st.rut) && R.aprob && vigente(R.aprob[st.topic.id])) return R.aprob[st.topic.id]; } catch (e) {}
+        try { const ci = JSON.parse(localStorage.getItem('perello_cap_ind') || 'null'); if (st.topic.id === 'induccion' && ci && rk(ci.rut) === rk(st.rut) && vigente(ci)) return ci; } catch (e) {}
+        return null;
+      };
+      const consulta = async k => {
+        st.hash = await rutHash(st.rut);
+        const ctl = new AbortController(); setTimeout(() => ctl.abort(), 25000);
+        return fetch(SCRIPT_URL + '?historial=' + st.hash + '&k=' + encodeURIComponent(k || ''), { signal: ctl.signal }).then(r => r.json());
+      };
+      const desde = d => { if (d.persona) st.persona = d.persona; const ap = (d.temas || []).find(t => t.tema_id === st.topic.id) || null; return vigente(ap) ? ap : null; };
+      const pedirClave = () => new Promise(res => {
+        const b = document.getElementById('zBody'); if (!b) return res(null);
+        b.innerHTML = `<h2>¿Ya aprobaste este tema?</h2>
+          <p>Escribe tu clave para revisar tu registro. Si ya lo aprobaste, podrás repasarlo rápido, sin esperar en cada lámina.</p>
+          <input type="password" id="peClave" autocomplete="current-password" placeholder="Tu clave (ej: juan1985)" style="width:100%;box-sizing:border-box">
+          <p id="peErr" style="display:none;color:#FF8A80;font-size:14px"></p>
+          <button class="btn" id="peOk">Revisar mi registro</button>
+          <button class="btn ghost" id="peNo">Seguir sin clave</button>`;
+        const go = async () => {
+          const k = document.getElementById('peClave').value.trim(), e = document.getElementById('peErr'), ok = document.getElementById('peOk');
+          if (!k) { e.textContent = 'Escribe tu clave o toca "Seguir sin clave".'; e.style.display = 'block'; return; }
+          ok.disabled = true; ok.textContent = 'Revisando…';
+          try { const d = await consulta(k);
+            if (!d.ok && (d.error === 'clave' || d.error === 'sinnac')) { ok.disabled = false; ok.textContent = 'Revisar mi registro'; e.textContent = d.error === 'sinnac' ? 'Tu ficha no tiene fecha de nacimiento. Contacta al área de RR.HH.' : 'Clave incorrecta. Inténtalo de nuevo o sigue sin clave.'; e.style.display = 'block'; return; }
+            if (d.ok) { try { const ps = JSON.parse(localStorage.getItem('perello_cap_persona') || '{}') || {}; localStorage.setItem('perello_cap_persona', JSON.stringify(Object.assign(ps, { name: st.name, rut: st.rut, k }))); } catch (er) {} }
+            res(d.ok ? desde(d) : null);
+          } catch (er) { res(null); }
+        };
+        document.getElementById('peOk').onclick = go;
+        document.getElementById('peClave').onkeydown = ev => { if (ev.key === 'Enter') go(); };
+        document.getElementById('peNo').onclick = () => res(null);
+        try { guiar('Si ya aprobaste este tema, escribe tu clave para repasarlo rápido.', 'peClave', 'TU CLAVE', ''); } catch (e) {}
+      });
+      temaAprobado = async function () {
+        let d = null;
+        try { d = await consulta((sesion() || {}).k || ''); } catch (e) {}
+        if (d && d.ok) return desde(d) || local();
+        const l = local(); if (l) return l;
+        if (d && d.error === 'clave') return pedirClave();
+        return null;
+      };
+      temaAprobado.__pe = true;
+    }
+  } catch (e) {}
 })();
