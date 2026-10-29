@@ -211,7 +211,7 @@
       const pedirClave = () => new Promise(res => {
         const b = document.getElementById('zBody'); if (!b) return res(null);
         b.innerHTML = `<h2>¿Ya aprobaste este tema?</h2>
-          <p>Escribe tu clave para revisar tu registro. Si ya lo aprobaste, podrás ver tu diploma o repasarlo.</p>
+          <p>Escribe tu clave para revisar tu registro. Si ya lo aprobaste, podrás repasarlo rápido, sin esperar en cada lámina.</p>
           <input type="password" id="peClave" autocomplete="current-password" placeholder="Tu clave (ej: juan1985)" style="width:100%;box-sizing:border-box">
           <p id="peErr" style="display:none;color:#FF8A80;font-size:14px"></p>
           <button class="btn" id="peOk">Revisar mi registro</button>
@@ -229,7 +229,7 @@
         document.getElementById('peOk').onclick = go;
         document.getElementById('peClave').onkeydown = ev => { if (ev.key === 'Enter') go(); };
         document.getElementById('peNo').onclick = () => res(null);
-        try { guiar('Si ya aprobaste este tema, escribe tu clave para ver tu registro.', 'peClave', 'TU CLAVE', ''); } catch (e) {}
+        try { guiar('Si ya aprobaste este tema, escribe tu clave para repasarlo rápido.', 'peClave', 'TU CLAVE', ''); } catch (e) {}
       });
       temaAprobado = async function () {
         let d = null;
