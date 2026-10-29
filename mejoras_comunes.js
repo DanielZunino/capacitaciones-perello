@@ -2,7 +2,7 @@
 // Se agrega al final del script de cada portal. Configurar antes: window.MARCA = { nombre, c1, c2, fuente }.
 // 1) Voz: siglas leídas a la chilena (EPP = "e pe pe", ACHS = "achs", 1404 = "catorce cero cuatro"...).
 // 2) Grúa horquilla con baliza encendida, alarma de retroceso y el nombre de la empresa.
-// 3) Evaluación: marcar no corrige al tiro; se puede cambiar la respuesta y se revisa al tocar el botón.
+// 3) Evaluación: marcar no corrige de inmediato; se puede cambiar la respuesta y se revisa al tocar el botón.
 // 4) Imágenes de las preguntas más chicas: en las de elegir imagen, ambas caben en la pantalla.
 // 5) Dibujos más vivos: ✓/✗ que laten y logo de la empresa en los camiones.
 // 6) Láminas: al volver atrás, botón para regresar de inmediato a la lámina donde iba (las ya vistas no esperan de nuevo).
@@ -448,5 +448,19 @@
     };
     const fv = VEST[PORTAL];
     if (fv && typeof W === 'function' && !W.__vest) { const W0 = W; W = function (x, y, o) { o = Object.assign({}, o || {}); fv(o); return W0(x, y, o); }; W.__vest = true; }
+  } catch (e) {}
+
+  // ---------- 11) Sin "al tiro" / "altiro" (no es bien visto): siempre "de inmediato", en charlas, preguntas, dibujos y pantallas
+  try {
+    const RX = /\b([Aa])l ?tiro\b/g, fx = s => s.replace(RX, (m, a) => a === 'A' ? 'De inmediato' : 'de inmediato');
+    const limpia = (o, d) => { if (!o || d > 8) return o; if (typeof o === 'string') return RX.test(o) ? (RX.lastIndex = 0, fx(o)) : o;
+      if (Array.isArray(o)) { for (let i = 0; i < o.length; i++) o[i] = limpia(o[i], d + 1); return o; }
+      if (typeof o === 'object') { for (const k in o) { const v = o[k]; if (typeof v === 'string' || (v && typeof v === 'object')) o[k] = limpia(v, d + 1); } } return o; };
+    const pasada = () => { try { if (typeof TOPICS !== 'undefined') limpia(TOPICS, 0); if (typeof NORMAS !== 'undefined') limpia(NORMAS, 0); } catch (e) {} };
+    pasada(); setTimeout(pasada, 800); setTimeout(pasada, 2500); window.addEventListener('load', pasada);
+    if (typeof S === 'object') Object.keys(S).forEach(k => { const f = S[k]; if (typeof f !== 'function' || f.__mjTiro) return; S[k] = function () { const r = f.apply(this, arguments); return typeof r === 'string' ? fx(r) : r; }; S[k].__mjTiro = true; });
+    const nodo = n => { if (n.nodeType === 3) { if (/[Aa]l ?tiro/.test(n.nodeValue)) n.nodeValue = fx(n.nodeValue); } else if (n.nodeType === 1) { const w = document.createTreeWalker(n, NodeFilter.SHOW_TEXT); let t; while ((t = w.nextNode())) if (/[Aa]l ?tiro/.test(t.nodeValue)) t.nodeValue = fx(t.nodeValue); } };
+    const iniciar = () => { nodo(document.body); new MutationObserver(ms => ms.forEach(m => { if (m.type === 'characterData') nodo(m.target); else m.addedNodes.forEach(nodo); })).observe(document.body, { childList: true, subtree: true, characterData: true }); };
+    if (document.body) iniciar(); else document.addEventListener('DOMContentLoaded', iniciar);
   } catch (e) {}
 })();
