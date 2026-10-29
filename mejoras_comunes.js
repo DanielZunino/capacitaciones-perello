@@ -463,4 +463,21 @@
     const iniciar = () => { nodo(document.body); new MutationObserver(ms => ms.forEach(m => { if (m.type === 'characterData') nodo(m.target); else m.addedNodes.forEach(nodo); })).observe(document.body, { childList: true, subtree: true, characterData: true }); };
     if (document.body) iniciar(); else document.addEventListener('DOMContentLoaded', iniciar);
   } catch (e) {}
+
+  // ---------- 12) Pasar las láminas sin esperar el tiempo mínimo: SOLO Daniel Zunino (RUT 16.675.624-3), para revisar las charlas.
+  //  · Todos los demás esperan el tiempo mínimo en cada lámina nueva, también en el repaso de temas aprobados y en charlas presenciales.
+  //  · Las láminas que ya vio en ese mismo tema no vuelven a esperar (sección 6).
+  try {
+    if (typeof tiempoMinimo === 'function' && !tiempoMinimo.__solo) {
+      const T1 = tiempoMinimo;
+      const esAdmin = () => { try { return String((typeof st !== 'undefined' && st.rut) || '').replace(/[^0-9kK]/g, '').toUpperCase() === '166756243'; } catch (e) { return false; } };
+      tiempoMinimo = function (card) {
+        if (esAdmin()) { try { clearInterval(_minT); } catch (e) {} const b = document.getElementById('lNext'); if (b) { b.disabled = false; b.textContent = b.textContent.replace(/ \(\d+\)$/, ''); } return; }
+        const r = st.repaso, m = st.modal, pr = window.__pruebas;
+        st.repaso = false; if (m === 'presencial') st.modal = 'distancia'; window.__pruebas = false;
+        try { return T1.apply(this, arguments); } finally { st.repaso = r; st.modal = m; window.__pruebas = pr; }
+      };
+      tiempoMinimo.__solo = true;
+    }
+  } catch (e) {}
 })();
