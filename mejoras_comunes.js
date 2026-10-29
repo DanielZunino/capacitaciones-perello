@@ -14,12 +14,15 @@
   // Marca por portal (si el portal no la define) y logo real de la empresa para camiones y grúas
   const MCFG = { 'capacitaciones-prosip': { nombre: 'PROSIP', c1: '#3A3A3A', c2: '#9E9E9E', fachada: 'PLANTA PROSIP', corto: 'PROSIP' },
     'capacitaciones-plaza': { nombre: 'Constructora Plaza', c1: '#B21E35', c2: '#2B2B2E', fachada: 'BODEGA PLAZA', corto: 'PLAZA' },
+    'capacitaciones-montasip': { nombre: 'Montasip', c1: '#141414', c2: '#F2B529', fachada: 'MONTASIP', corto: 'MONTASIP' },
+    'capacitaciones-zg': { nombre: 'ZG SpA', c1: '#2E7D32', c2: '#6E4223', fachada: 'ZG SPA', corto: 'ZG' },
+    'capacitaciones-transporteszg': { nombre: 'Transportes ZG SpA', c1: '#2E7D32', c2: '#6E4223', fachada: 'TRANSPORTES ZG', corto: 'ZG' },
     'capacitaciones-oym': { nombre: 'OYM Center', c1: '#0B7A35', c2: '#E0301E', fachada: 'OYM CENTER', corto: 'OYM' },
     'capacitaciones-constructor': { nombre: 'Constructor Center', c1: '#0039A6', c2: '#DC281D', fachada: 'FERRETERÍA', corto: 'CONSTRUCTOR' } };
   const PORTAL = location.pathname.split('/')[1] || '', MC = MCFG[PORTAL] || null;
   if (!M.nombre && MC) Object.assign(M, MC, { fuente: 'Arial' });
   const LOGO = (() => { try { const i = document.querySelector('.logoBar img'); return i ? { src: i.src, ar: (i.naturalWidth && i.naturalHeight) ? i.naturalWidth / i.naturalHeight : 0 } : null; } catch (e) { return null; } })();
-  const LOGO_AR = { 'capacitaciones-perello': 3.02, 'capacitaciones-prosip': 6.21, 'capacitaciones-plaza': 1.22, 'capacitaciones-oym': 1.25, 'capacitaciones-constructor': 1.99 };
+  const LOGO_AR = { 'capacitaciones-perello': 3.02, 'capacitaciones-prosip': 6.21, 'capacitaciones-plaza': 1.22, 'capacitaciones-montasip': 1.27, 'capacitaciones-zg': 1.42, 'capacitaciones-transporteszg': 1.42, 'capacitaciones-oym': 1.25, 'capacitaciones-constructor': 1.99 };
   if (LOGO && !LOGO.ar) LOGO.ar = LOGO_AR[location.pathname.split('/')[1] || ''] || 2;
   // placa blanca con el logo (mantiene la proporción); cx, cy = centro; w, h = espacio máximo
   const placaLogo = (cx, cy, w, h) => {
@@ -340,7 +343,7 @@
   //  Mismos 18 ítems en todas las empresas (Constructor, OYM, Plaza, PROSIP). Perelló tiene su propia versión (perello_extra.js).
   try {
     const CFG = { '/capacitaciones-constructor/': { m: 'la Mutual de Seguridad', n: '1407', l: 'la sucursal' }, '/capacitaciones-oym/': { m: 'la Mutual de Seguridad', n: '1407', l: 'la sucursal' },
-      '/capacitaciones-plaza/': { m: 'la ACHS', n: '1404', l: 'la obra' }, '/capacitaciones-prosip/': { m: 'la ACHS', n: '1404', l: 'la planta' } };
+      '/capacitaciones-plaza/': { m: 'la ACHS', n: '1404', l: 'la obra' }, '/capacitaciones-montasip/': { m: 'la ACHS', n: '1404', l: 'la obra' }, '/capacitaciones-zg/': { m: 'la ACHS', n: '1404', l: 'la faena' }, '/capacitaciones-transporteszg/': { m: 'la ACHS', n: '1404', l: 'la faena' }, '/capacitaciones-prosip/': { m: 'la ACHS', n: '1404', l: 'la planta' } };
     const C = CFG[location.pathname.replace(/index\.html$/, '')];
     const ind = C && typeof TOPICS !== 'undefined' && TOPICS.find(t => t.id === 'induccion');
     if (ind && !ind.__i18) {
