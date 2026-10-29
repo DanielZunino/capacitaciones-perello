@@ -150,7 +150,7 @@
       const actual = () => { let o = log.leer(); if (!o || o.tema !== (st.topic && st.topic.id) || o.rut !== st.rut) o = { tema: st.topic.id, rut: st.rut, intentos: [] }; return o; };
       const construir = base => mezclar(base.map((q, i) => {
         const vs = [q].concat(Array.isArray(q.v) ? q.v : []), k = Math.floor(Math.random() * vs.length);
-        const c = Object.assign({}, q, k ? vs[k] : {}); delete c.v; c.__n = i + 1; c.__ver = 'ABCDEFG'[k]; c.__nv = vs.length; c.__base = q; return c;
+        const c = k ? Object.assign({ s: q.s }, vs[k]) : Object.assign({}, q); delete c.v; c.__n = i + 1; c.__ver = 'ABCDEFG'[k]; c.__nv = vs.length; c.__base = q; return c;
       }));
       const S0 = startQuiz;
       startQuiz = function () {
