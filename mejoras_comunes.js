@@ -437,4 +437,16 @@
       ind.quiz = B.map((v, i) => Object.assign({ s: esc[i] }, v[0], { v: [v[1], v[2]] }));
     }
   } catch (e) {}
+
+  // ---------- 10) Vestimenta de los monitos según la empresa
+  //  · PROSIP: overol naranjo, guantes de cuero (carretilla), zapatos de seguridad y casco.
+  //  · Constructora Plaza: obreros de la construcción (casco, chaleco geólogo, jeans y guantes de cuero).
+  try {
+    const VEST = {
+      'capacitaciones-prosip': o => { if (o.shirt === undefined) { o.shirt = '#EF6C00'; if (o.pants === undefined) o.pants = '#E65100'; } if (o.gloves === undefined || o.gloves === true) o.gloves = '#D9B77E'; },
+      'capacitaciones-plaza': o => { const sh = String(o.shirt || '#1565C0').toUpperCase(); if (['#0039A6', '#1565C0', '#455A64', '#DC281D'].indexOf(sh) >= 0) { o.shirt = sh === '#455A64' ? '#4E5D66' : '#6D8291'; if (o.pants === undefined || o.pants === '#1F4E9E') o.pants = '#2F4A7A'; if (o.vest === undefined) o.vest = true; if (o.helmet === undefined) o.helmet = sh === '#455A64' ? '#ECEFF1' : '#FFC20E'; if (o.gloves === undefined || o.gloves === true) o.gloves = '#D9B77E'; } }
+    };
+    const fv = VEST[PORTAL];
+    if (fv && typeof W === 'function' && !W.__vest) { const W0 = W; W = function (x, y, o) { o = Object.assign({}, o || {}); fv(o); return W0(x, y, o); }; W.__vest = true; }
+  } catch (e) {}
 })();
