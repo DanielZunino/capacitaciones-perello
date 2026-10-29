@@ -482,4 +482,25 @@
       tiempoMinimo.__solo = true;
     }
   } catch (e) {}
+
+  // ---------- 13) Aviso al inicio de cada charla: será evaluada, exigencia 100 % (nota 7,0) y derecho a reforzar y repetir la evaluación
+  try {
+    if (typeof renderLearn === 'function' && !renderLearn.__mjAviso) {
+      const RL2 = renderLearn;
+      renderLearn = function () {
+        RL2.apply(this, arguments);
+        try {
+          if (st.li !== 0 || st.mode === 'ds44') return;
+          const cb = document.querySelector('#lCard .cb'); if (!cb || cb.querySelector('.mjEval')) return;
+          const d = document.createElement('div');
+          d.className = 'rd mjEval';
+          d.style.cssText = 'background:#FFF8E1;border-left:6px solid #F9A825;border-radius:10px;padding:10px 12px;margin:0 0 12px;font-size:15px;line-height:1.4;color:#3E2723;text-align:left';
+          d.innerHTML = '<b>📝 Esta charla será evaluada.</b> Al final responderás una evaluación y para aprobar se exige el <b>100 % de respuestas correctas</b> (nota 7,0). Si no apruebas, tienes derecho a <b>reforzar tus conocimientos</b> repasando las láminas y a <b>repetir la evaluación</b>.';
+          cb.insertBefore(d, cb.firstChild);
+          const o = document.getElementById('bOir'); if (o) o.click();   // la voz lee también el aviso
+        } catch (e) {}
+      };
+      renderLearn.__mjAviso = true; renderLearn.__mj = true;
+    }
+  } catch (e) {}
 })();
