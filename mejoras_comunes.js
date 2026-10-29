@@ -7,6 +7,7 @@
 // 5) Dibujos más vivos: ✓/✗ que laten y logo de la empresa en los camiones.
 // 6) Láminas: al volver atrás, botón para regresar de inmediato a la lámina donde iba (las ya vistas no esperan de nuevo).
 // 7) Prueba: se aprueba solo con 7,0; preguntas y alternativas al azar (con versiones); no muestra la correcta; PDF con la prueba respondida a Drive.
+// 8) Inducción: 1 pregunta por cada uno de los 18 ítems de la inducción escrita, con 3 versiones (Constructor, OYM, Plaza y PROSIP).
 // Se carga desde https://danielzunino.github.io/capacitaciones-perello/mejoras_comunes.js en todos los portales.
 (function () {
   const M = window.MARCA || {};
@@ -260,6 +261,105 @@
         return F0.call(this, u, op);
       };
       window.MJ_EVAL = { registrar, pdfPrueba, construir, log };
+    }
+  } catch (e) {}
+
+  // ---------- 8) Inducción con 1 pregunta por cada uno de los 18 ítems de la inducción escrita (3 versiones cada una)
+  //  Mismos 18 ítems en todas las empresas (Constructor, OYM, Plaza, PROSIP). Perelló tiene su propia versión (perello_extra.js).
+  try {
+    const CFG = { '/capacitaciones-constructor/': { m: 'la Mutual de Seguridad', n: '1407', l: 'la sucursal' }, '/capacitaciones-oym/': { m: 'la Mutual de Seguridad', n: '1407', l: 'la sucursal' },
+      '/capacitaciones-plaza/': { m: 'la ACHS', n: '1404', l: 'la obra' }, '/capacitaciones-prosip/': { m: 'la ACHS', n: '1404', l: 'la planta' } };
+    const C = CFG[location.pathname.replace(/index\.html$/, '')];
+    const ind = C && typeof TOPICS !== 'undefined' && TOPICS.find(t => t.id === 'induccion');
+    if (ind && !ind.__i18) {
+      ind.__i18 = true;
+      const L = ind.learn, has = k => typeof S[k] === 'function';
+      // ítem: [regex de la lámina, escena de respaldo, lámina de respaldo (título, texto, idea clave)]
+      const IT = [
+        [/orden/i, 'orden_aisle', ['Orden y limpieza: obligatorio', 'El área de trabajo debe estar <b>siempre</b> ordenada y limpia: pasillos y salidas despejados, materiales en su lugar. Retira o reporta de inmediato derrames, embalajes, polvo o clavos. No cumplir es una <b>falta grave</b>.', 'Orden y limpieza siempre.']],
+        [/16\.744|seguro|protegido/i, 'accidente_ley', ['Ley 16.744: estás protegido', 'El seguro de la <b>Ley 16.744</b> te cubre ante accidentes del trabajo, de trayecto y enfermedades profesionales: atención médica, rehabilitación y prestaciones económicas.', 'Todos estamos cubiertos.']],
+        [/tienes un accidente|ocurre un accidente|si te accidentas/i, 'accidente_avisa', ['Si tienes un accidente', 'Avisa <b>de inmediato</b> a tu jefatura, aunque parezca leve. Te atiendes en ' + C.m + '. Emergencias: <b>' + C.n + '</b>, las 24 horas.', 'Todo accidente se avisa al tiro a la jefatura.']],
+        [/grave/i, 'accidente_companero', ['Accidente grave o fatal', 'Es grave, por ejemplo, una caída de más de <b>1,8 metros</b>, una amputación o si se requiere rescate o reanimación. Se <b>paraliza la faena</b>, se delimita el área y se llama al ' + C.n + '. No muevas al accidentado salvo que siga en peligro.', 'Paralizar, delimitar y pedir ayuda.']],
+        [/bienvenid|política|evitar/i, 'accidente_casi', ['Nuestra política de prevención', 'Los accidentes <b>se pueden evitar</b>. La seguridad es tarea de todos: la empresa y cada trabajador cumpliendo las normas.', 'La seguridad es tarea de todos.']],
+        [/EPP/, 'epp_task', ['Tus EPP', 'El uso del EPP es <b>obligatorio</b> todo el tiempo que estés expuesto al riesgo. Si se daña, devuélvelo y pide la reposición antes de seguir.', 'EPP puesto siempre.']],
+        [/extintor/i, 'incendios_ext', ['Uso del extintor', 'Retira el seguro, apunta a la <b>base del fuego</b> y descarga en barrido. Si no se apaga en segundos, evacúa y llama al 132.', 'Seguro, base y barrido.']],
+        [/señal/i, 'senaletica_piso', ['Señalización y zonas seguras', 'Respeta la señalización, camina por las <b>zonas peatonales</b>, fuma solo en la zona habilitada y mantén despejada la <b>zona de seguridad</b>.', 'Zonas peatonales y zona de seguridad despejada.']],
+        [/20\.949|peso/i, 'cargas_limites', ['Peso máximo (Ley 20.949)', '<b>25 kg</b> para hombres adultos y <b>20 kg</b> para mujeres y menores de 18. Sobre eso: ayuda mecánica o de otra persona.', '25 kg hombres, 20 kg mujeres.']],
+        [/hanta/i, 'orden_clean', ['Hantavirus', 'Lo transmite el <b>ratón colilargo</b>. Te contagias al respirar polvo contaminado. <b>Nunca barras en seco</b>: humedece con agua y cloro, usa mascarilla y guantes, y avisa si tienes fiebre y dolor muscular.', 'Nunca barrer en seco.']],
+        [/químic/i, 'quimicos_hds', ['Sustancias químicas', 'Todo producto tiene su <b>HDS</b> (DS 57). Usa el EPP que indica, guárdalo en su envase original rotulado y <b>nunca mezcles</b> productos.', 'HDS, envase original y nunca mezclar.']],
+        [/calor|temperatura/i, 'uv_sombra', ['Calor: hidrátate', 'Con calor puedes deshidratarte o sufrir un <b>golpe de calor</b> (mareo, dolor de cabeza, calambres). Toma <b>agua seguido</b> y haz pausas a la sombra.', 'Agua seguido y sombra.']],
+        [/TMERT|repetitiv/i, 'tmert_pausa', ['Tareas repetitivas (TMERT)', 'Los movimientos repetitivos y las posturas forzadas lesionan hombros, codos y muñecas. Haz las <b>pausas activas</b>, alterna tareas y avisa cualquier dolor.', 'Pausas y avisar el dolor.']],
+        [/Karin|respeto/i, 'karin_intro', ['Ley Karin', 'La <b>Ley Karin</b> previene y sanciona el acoso laboral, el acoso sexual y la violencia en el trabajo. Las denuncias son <b>confidenciales</b>.', 'Respeto siempre; se puede denunciar.']],
+        [/PREXOR|ruido/i, 'ruido_prexor', ['Ruido (PREXOR)', 'El ruido fuerte daña el oído para siempre. El protocolo <b>PREXOR</b> controla la exposición; en zonas señalizadas el protector auditivo es <b>obligatorio</b>.', 'Zona de ruido: protector siempre.']],
+        [/UV|sol\b|radiación/i, 'uv_bloq', ['Radiación UV', 'Al aire libre usa bloqueador, gorro legionario, lentes con filtro UV y busca sombra. Lo más peligroso: entre las <b>11:00 y las 16:00</b>, también nublado.', 'Bloqueador, gorro, lentes y sombra.']],
+        [/psicosocial/i, 'psico_ceal', ['Riesgos psicosociales', 'La carga de trabajo, el liderazgo y el ambiente afectan la salud. El cuestionario <b>CEAL-SM</b> detecta estos riesgos para mejorar. Si te sientes sobrepasado, conversa con tu jefatura.', 'Si te sientes sobrepasado, conversa.']],
+        [/ilumin/i, 'emergencias_luz', ['Iluminación', 'Una buena luz evita fatiga visual, errores y accidentes. Si una luz se quema o un sector queda oscuro, <b>avisa</b>; no improvises.', 'Luz quemada: se avisa.']]
+      ];
+      const esc = IT.map(([re, sb, card]) => {
+        const c = L.find(l => re.test(l.t));
+        if (c) return c.s;
+        const s = has(sb) ? sb : (L[0] && L[0].s);
+        L.splice(Math.max(1, L.length - 2), 0, { s, t: card[0], x: card[1], k: card[2] });
+        return s;
+      });
+      const O = (q, o, w) => ({ q, o, a: 0, w }), V = (q, vf, w) => ({ q, vf, w });
+      const B = [
+        [O('¿Cómo debe estar siempre tu área de trabajo?', ['Ordenada y limpia, con pasillos y salidas despejados', 'Ordenada solo cuando viene la jefatura', 'Con materiales en el pasillo para tenerlos a mano'], 'Orden y limpieza siempre.'),
+         O('Ves un derrame, clavos o restos de embalaje en el pasillo. ¿Qué haces?', ['Lo retiro o lo reporto de inmediato', 'Paso por el lado', 'Lo dejo para el final del día'], 'Se retira o se reporta de inmediato.'),
+         O('No cumplir con el orden y la limpieza del área es…', ['Una falta grave a la seguridad y a la normativa interna', 'Algo sin importancia', 'Un problema solo del personal de aseo'], 'Es obligatorio y sin excepciones.')],
+        [O('¿Qué cubre el seguro de la Ley 16.744?', ['Accidentes del trabajo, de trayecto y enfermedades profesionales', 'Solo accidentes graves', 'Solo enfermedades comunes'], 'Cubre a todos los trabajadores.'),
+         V('El seguro de la Ley 16.744 también cubre los accidentes de trayecto.', true, 'Verdadero.'),
+         O('El seguro de la Ley 16.744 incluye…', ['Atención médica, rehabilitación y prestaciones económicas', 'Solo la primera consulta', 'Nada si el accidente fue leve'], 'Atención, rehabilitación y prestaciones.')],
+        [O('Tienes un accidente que parece leve. ¿Qué haces?', ['Aviso de inmediato a mi jefatura', 'Sigo trabajando y aviso al final del día', 'No digo nada si no es grave'], 'Todo accidente se avisa de inmediato.'),
+         O('¿Dónde te atiendes por un accidente del trabajo o de trayecto?', ['En ' + C.m + ', la mutualidad de la empresa', 'En cualquier consultorio, pagando la consulta', 'En la farmacia más cercana'], 'En ' + C.m + '.'),
+         O('¿Cuál es el número de emergencias de ' + C.m + '?', [C.n, '131', '133'], C.n + ', las 24 horas.')],
+        [O('Ante un accidente grave o fatal, ¿qué se hace en el lugar?', ['Se paraliza la faena y se delimita el área con conos o cinta', 'Se sigue trabajando para no atrasarse', 'Se limpia todo antes de que llegue alguien'], 'Paralizar y delimitar.'),
+         O('¿Cuál de estos es un accidente grave?', ['Una caída de más de 1,8 metros de altura', 'Un rasguño en la mano', 'Un golpe leve en el codo'], 'Caídas de más de 1,8 m son graves.'),
+         O('Un compañero queda inconsciente tras un golpe fuerte. ¿Qué haces primero?', ['Llamo al ' + C.n + ' y aviso a la jefatura, sin moverlo salvo que siga en peligro', 'Lo levanto y lo llevo caminando', 'Le doy agua y sigo trabajando'], 'Pide ayuda y no lo muevas salvo peligro.')],
+        [V('Los accidentes del trabajo se pueden evitar.', true, 'Verdadero.'),
+         O('Según la política de prevención, ¿quién es responsable de trabajar seguro?', ['Todos: la empresa y cada trabajador cumpliendo las normas', 'Solo el prevencionista', 'Solo la jefatura'], 'Es tarea de todos.'),
+         O('¿Cuál es la causa más común de un accidente?', ['Una acción insegura que se pudo evitar, como apurarse o no usar el EPP', 'La mala suerte', 'El clima'], 'La mayoría se pueden evitar.')],
+        [O('Notas que tu EPP está roto o dañado. ¿Qué haces?', ['Aviso a mi jefatura y pido el cambio antes de seguir trabajando', 'Sigo trabajando y lo cambio después', 'Me lo saco y trabajo sin él'], 'Un EPP dañado no protege.'),
+         O('¿Cuándo debes usar tu EPP?', ['Todo el tiempo que estés expuesto al riesgo', 'Solo cuando está la jefatura', 'Solo si la tarea es larga'], 'Todo el tiempo de exposición.'),
+         O('¿Qué haces con un EPP deteriorado para recibir uno nuevo?', ['Lo devuelvo y pido la reposición', 'Lo boto a la basura', 'Lo sigo usando igual'], 'Se devuelve el deteriorado.')],
+        [O('Al usar el extintor, ¿hacia dónde apuntas?', ['A la base del fuego', 'A las llamas más altas', 'Al humo'], 'A la base del fuego.'),
+         O('¿Cuál es el orden correcto para usar el extintor?', ['Retirar el seguro, apuntar a la base y descargar en barrido', 'Apuntar a las llamas, descargar y después retirar el seguro', 'Agitarlo y lanzar el polvo hacia arriba'], 'Seguro, base y barrido.'),
+         O('Intentaste apagar un amago y no se apaga en segundos. ¿Qué haces?', ['Evacúo y aviso: se llama al 132 (Bomberos)', 'Sigo intentando hasta que se apague', 'Le echo agua al tablero eléctrico'], 'Si no se apaga en segundos, se evacúa.')],
+        [O('¿Por dónde debes caminar en ' + C.l + '?', ['Por las zonas peatonales señalizadas', 'Por donde sea más corto', 'Por la ruta de los vehículos'], 'Por las zonas peatonales.'),
+         O('¿Dónde se puede fumar?', ['Solo en la zona habilitada para fumar', 'En cualquier lugar abierto', 'Dentro de la bodega, con la puerta abierta'], 'Solo en la zona habilitada.'),
+         O('La zona de seguridad debe estar…', ['Despejada y conocida por todos', 'Ocupada con materiales si falta espacio', 'Cerrada con llave'], 'Despejada para emergencias.')],
+        [O('¿Cuál es el peso máximo que un hombre adulto puede cargar manualmente?', ['25 kg', '40 kg', '50 kg'], 'Ley 20.949: 25 kg.'),
+         O('¿Cuál es el peso máximo para mujeres y menores de 18 años?', ['20 kg', '30 kg', '25 kg'], 'Ley 20.949: 20 kg.'),
+         O('La carga que debes mover pesa más del límite. ¿Qué haces?', ['Pido ayuda o uso un carro o transpaleta', 'La levanto rápido de una vez', 'La arrastro con la espalda doblada'], 'Ayuda mecánica o de otra persona.')],
+        [O('¿Cómo se contagia el hantavirus?', ['Al respirar polvo contaminado con orina o fecas de ratones silvestres', 'Por tomar agua de la llave', 'Por estar con un compañero resfriado'], 'Al respirar polvo contaminado.'),
+         O('Debes limpiar una bodega con polvo. ¿Cómo lo haces?', ['Humedezco con agua y cloro antes de limpiar, con mascarilla y guantes', 'Barro en seco, es más rápido', 'Levanto el polvo con aire comprimido'], 'Nunca barrer en seco.'),
+         O('Después de limpiar un galpón te da fiebre y dolor muscular. ¿Qué haces?', ['Aviso de inmediato a mi jefatura', 'Espero que se pase solo', 'Tomo un remedio y no digo nada'], 'Se avisa de inmediato.')],
+        [O('¿Qué pasa si mezclas cloro con ácido?', ['Se libera un gas tóxico', 'Limpia mejor', 'Nada'], 'Nunca mezcles productos.'),
+         O('¿Dónde encuentras cómo usar un químico y qué EPP necesitas?', ['En su Hoja de Datos de Seguridad (HDS)', 'En internet', 'Preguntándole a cualquier compañero'], 'La HDS lo indica.'),
+         O('¿Dónde se guarda un producto químico?', ['En su envase original y rotulado', 'En una botella de bebida', 'En cualquier envase limpio'], 'Envase original y rotulado.')],
+        [O('Trabajas en un día de mucho calor. ¿Qué haces?', ['Tomo agua seguido, aunque no tenga sed', 'Tomo agua solo en la colación', 'Trabajo sin pausas para terminar antes'], 'Hidrátate seguido.'),
+         O('¿Cuál es una señal de golpe de calor?', ['Mareo, dolor de cabeza y mucho cansancio', 'Ganas de comer', 'Manos frías'], 'Mareo y dolor de cabeza.'),
+         O('Un compañero se marea por el calor. ¿Qué haces?', ['Lo llevo a la sombra, le doy agua y aviso a la jefatura', 'Le digo que siga, que ya se le pasará', 'Lo dejo descansando al sol'], 'Sombra, agua y aviso.')],
+        [O('Te empieza a doler la muñeca o el hombro por una tarea repetitiva. ¿Qué haces?', ['Aviso de inmediato a mi jefatura', 'Sigo igual hasta que se me pase', 'Tomo un analgésico y no digo nada'], 'Las molestias se avisan a tiempo.'),
+         O('¿Qué ayuda a prevenir lesiones por tareas repetitivas?', ['Hacer las pausas activas y alternar tareas', 'Trabajar más rápido para terminar antes', 'Hacer fuerza con la muñeca doblada'], 'Pausas y alternar tareas.'),
+         O('¿Qué partes del cuerpo se lesionan con movimientos repetitivos?', ['Hombros, codos y muñecas', 'Solo los pies', 'Ninguna'], 'Hombros, codos y muñecas.')],
+        [O('Un compañero te grita y humilla seguido. ¿Qué puedes hacer?', ['Denunciarlo por los canales de la empresa (Ley Karin)', 'Nada, es normal en el trabajo', 'Responderle a golpes'], 'Se denuncia por los canales formales.'),
+         O('¿Qué regula la Ley Karin?', ['La prevención y sanción del acoso laboral, el acoso sexual y la violencia en el trabajo', 'Los horarios de colación', 'El peso máximo de carga'], 'Acoso y violencia en el trabajo.'),
+         V('Las denuncias por Ley Karin se manejan con confidencialidad.', true, 'Verdadero.')],
+        [O('En una zona señalizada con ruido, el protector auditivo es…', ['Obligatorio todo el tiempo', 'Opcional', 'Solo para los nuevos'], 'Obligatorio.'),
+         O('¿Qué daño produce el ruido sin protección?', ['Pérdida de audición que no se recupera', 'Ninguno si uno se acostumbra', 'Solo un dolor de cabeza pasajero'], 'Es irreversible.'),
+         O('¿Qué protocolo del MINSAL controla la exposición a ruido?', ['PREXOR', 'TMERT', 'Ley Karin'], 'PREXOR.')],
+        [O('Trabajas al aire libre en verano. ¿Qué haces?', ['Uso bloqueador, gorro legionario, lentes con filtro UV y busco sombra', 'Me saco la polera para estar fresco', 'Nada si está nublado'], 'Protégete siempre del sol.'),
+         O('¿En qué horario la radiación UV es más peligrosa?', ['Entre las 11:00 y las 16:00', 'En la mañana temprano', 'Al atardecer'], 'Entre las 11:00 y las 16:00.'),
+         V('En días nublados no hay radiación UV.', false, 'Falso: también hay radiación con nubes.')],
+        [O('¿Para qué se aplica el cuestionario CEAL-SM?', ['Para identificar riesgos psicosociales y mejorar el ambiente de trabajo', 'Para evaluar tu desempeño y sancionarte', 'Para calcular tu sueldo'], 'Detecta riesgos psicosociales.'),
+         O('¿Cuál de estos es un factor de riesgo psicosocial?', ['Una carga de trabajo excesiva o un mal liderazgo', 'Usar el EPP', 'Lavarse las manos'], 'Carga, liderazgo y ambiente.'),
+         O('Hace semanas te sientes sobrepasado por el trabajo. ¿Qué haces?', ['Lo converso con mi jefatura o con prevención para buscar apoyo', 'Me lo guardo', 'Falto sin avisar'], 'Conversarlo es el primer paso.')],
+        [O('Una luz de tu puesto se quemó y quedaste en penumbra. ¿Qué haces?', ['Aviso a la jefatura para que la reparen', 'Sigo trabajando igual', 'Cambio la ampolleta yo mismo subido a una silla'], 'Se avisa; no se improvisa.'),
+         O('¿Por qué es importante una buena iluminación en el trabajo?', ['Evita la fatiga visual, los errores y los accidentes', 'Solo para ahorrar energía', 'No tiene importancia'], 'Previene fatiga, errores y accidentes.'),
+         O('Ves un pasillo oscuro por donde pasan vehículos o grúas. ¿Qué haces?', ['Lo informo a la jefatura', 'Paso corriendo', 'Camino mirando el celular con la linterna'], 'Las condiciones inseguras se informan.')]
+      ];
+      ind.quiz = B.map((v, i) => Object.assign({ s: esc[i] }, v[0], { v: [v[1], v[2]] }));
     }
   } catch (e) {}
 })();
