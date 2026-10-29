@@ -6,6 +6,7 @@
 // 4) Imágenes de las preguntas más chicas: en las de elegir imagen, ambas caben en la pantalla.
 // 5) Dibujos más vivos: ✓/✗ que laten y logo de la empresa en los camiones.
 // 6) Láminas: al volver atrás, botón para regresar de inmediato a la lámina donde iba (las ya vistas no esperan de nuevo).
+// 7) Prueba: se aprueba solo con 7,0; preguntas y alternativas al azar (con versiones); no muestra la correcta; PDF con la prueba respondida a Drive.
 // Se carga desde https://danielzunino.github.io/capacitaciones-perello/mejoras_comunes.js en todos los portales.
 (function () {
   const M = window.MARCA || {};
@@ -66,14 +67,24 @@
         document.querySelectorAll('#qBody .sel').forEach(b => b.classList.remove('sel'));
         btn.classList.add('sel'); st.sel = { btn, ok };
         try { SFX.play('next'); } catch (e) {}
-        const b = document.getElementById('qNext'); b.textContent = 'Revisar mi respuesta'; b.style.display = 'block';
-        try { GUIA.hide(); leerYGuiar([], 'qNext', 'REVISAR', 'Si estás seguro, toca revisar. Si te equivocaste, cambia tu respuesta.'); } catch (e) {}
+        const b = document.getElementById('qNext'), conNota = window.MJ_EVAL && st.mode !== 'ds44' && !st.repaso, ult = st.qi === st.topic.quiz.length - 1;
+        b.textContent = conNota ? (ult ? 'Terminar la prueba' : 'Siguiente pregunta') : 'Revisar mi respuesta'; b.style.display = 'block';
+        try { GUIA.hide(); leerYGuiar([], 'qNext', conNota ? (ult ? 'TERMINAR' : 'SIGUIENTE') : 'REVISAR', conNota ? 'Si estás seguro, toca el botón. Si te equivocaste, cambia tu respuesta.' : 'Si estás seguro, toca revisar. Si te equivocaste, cambia tu respuesta.'); } catch (e) {}
         setTimeout(() => b.scrollIntoView({ behavior: 'smooth', block: 'end' }), 50);
       };
       answer.__mejor = true;
       const nx = document.getElementById('qNext'), N0 = nx.onclick;
       nx.onclick = function (ev) {
-        if (!st.revisada) { if (!st.sel) return; st.revisada = true; revelar(st.sel.btn, st.sel.ok); return; }
+        if (!st.revisada) {
+          if (!st.sel) return; st.revisada = true;
+          if (st.mode === 'ds44' || st.repaso || !window.MJ_EVAL) { revelar(st.sel.btn, st.sel.ok); return; }
+          // Evaluación con nota: se registra la respuesta SIN mostrar si es correcta (ni color, ni sonido, ni explicación) y se pasa a la siguiente
+          try { MJ_EVAL.registrar(st.sel.btn, st.sel.ok); } catch (e) {}
+          const s0 = SFX.play, l0 = window.leerYGuiar; SFX.play = () => {}; try { leerYGuiar = () => {}; } catch (e) {}
+          try { revelar(st.sel.btn, st.sel.ok); } finally { SFX.play = s0; try { leerYGuiar = l0; } catch (e) {} }
+          try { SFX.play('next'); } catch (e) {}
+          return N0.call(this, ev);
+        }
         return N0.call(this, ev);
       };
     }
@@ -122,6 +133,133 @@
         if (st.li <= st.__done) { try { clearInterval(_minT); } catch (e) {} const b = document.getElementById('lNext'); if (b) b.disabled = false; return; }
         return TM.apply(this, arguments);
       };
+    }
+  } catch (e) {}
+
+  // ---------- 7) Evaluación con nota 7,0, anticopia y prueba respondida en PDF (va solo a Drive, junto al diploma)
+  //  · Se aprueba solo con todas las respuestas correctas (nota 7,0). Si no, repasa las láminas de lo que falló y repite.
+  //  · Cada intento: preguntas en otro orden, alternativas mezcladas y, si la pregunta tiene versiones (q.v = [{q,o,a,w}, ...]), una al azar.
+  //  · No se muestra cuál era la correcta. Todo lo respondido (todos los intentos) queda en un PDF que se envía al servidor con el diploma.
+  try {
+    if (typeof startQuiz === 'function' && typeof result === 'function' && !window.MJ_EVAL) {
+      const conNota = () => st.mode !== 'ds44' && !st.repaso;
+      const mezclar = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+      const LK = 'mj_eval_' + location.pathname;
+      const log = { leer() { try { const o = JSON.parse(localStorage.getItem(LK) || 'null'); return o && Date.now() - o.ts < 2 * 864e5 ? o : null; } catch (e) { return null; } },
+        guardar(o) { try { o.ts = Date.now(); localStorage.setItem(LK, JSON.stringify(o)); } catch (e) {} }, borrar() { try { localStorage.removeItem(LK); } catch (e) {} } };
+      const actual = () => { let o = log.leer(); if (!o || o.tema !== (st.topic && st.topic.id) || o.rut !== st.rut) o = { tema: st.topic.id, rut: st.rut, intentos: [] }; return o; };
+      const construir = base => mezclar(base.map((q, i) => {
+        const vs = [q].concat(Array.isArray(q.v) ? q.v : []), k = Math.floor(Math.random() * vs.length);
+        const c = Object.assign({}, q, k ? vs[k] : {}); delete c.v; c.__n = i + 1; c.__ver = 'ABCDEFG'[k]; c.__nv = vs.length; c.__base = q; return c;
+      }));
+      const S0 = startQuiz;
+      startQuiz = function () {
+        if (conNota()) {
+          const base = st.topic.__base || st.topic;
+          st.topic = Object.assign({}, base, { __base: base, quiz: construir(base.quiz) });
+          const o = actual(); o.intentos.push({ n: o.intentos.length + 1, ini: Date.now(), r: [] }); log.guardar(o);
+        }
+        return S0.apply(this, arguments);
+      };
+      const txt = b => (b.textContent || '').trim();
+      const registrar = (btn, ok) => {
+        const q = st.topic.quiz[st.qi], o = actual(); if (!o.intentos.length) o.intentos.push({ n: 1, ini: Date.now(), r: [] });
+        const it = o.intentos[o.intentos.length - 1];
+        let ops, eleg, corr;
+        if (q.pick) { const bs = [...document.querySelectorAll('#qBody .pick')]; ops = bs.map((b, k) => 'Imagen ' + 'AB'[k]); eleg = 'Imagen ' + 'AB'[bs.indexOf(btn)]; corr = 'Imagen ' + 'AB'[bs.findIndex(b => +b.dataset.i === q.a)]; }
+        else { const bs = [...document.querySelectorAll('#qBody .opt')]; ops = bs.map(txt); eleg = txt(btn); const g = bs.find(b => b.dataset.ok === '1'); corr = g ? txt(g) : ''; }
+        it.r = it.r.filter(x => x.p !== st.qi + 1);
+        it.r.push({ p: st.qi + 1, n: q.__n || st.qi + 1, ver: q.__ver || 'A', nv: q.__nv || 1, q: q.q, ops, eleg, corr, ok: !!ok, s: q.s || '' });
+        it.fin = Date.now(); log.guardar(o);
+      };
+      // Resultado: aprueba solo con 7,0
+      const R0 = result;
+      result = function () {
+        if (!conNota()) return R0.apply(this, arguments);
+        const tot = st.topic.quiz.length, p = st.ok / tot; st.nota = calcNota(p);
+        const pass = st.ok === tot;
+        const o = actual(), it = o.intentos[o.intentos.length - 1]; if (it) { it.nota = st.nota; it.ok = st.ok; it.tot = tot; it.fin = Date.now(); log.guardar(o); }
+        // láminas a repasar según las preguntas falladas (sin decir cuál era la respuesta)
+        const L = st.topic.learn || [], mal = it ? it.r.filter(x => !x.ok) : [];
+        const idx = [...new Set(mal.map(x => L.findIndex(c => c.s && c.s === x.s)).filter(i => i >= 0))].sort((a, b) => a - b);
+        st.__repasar = idx.length ? idx[0] : 0;
+        $('rTitle').textContent = pass ? '¡Aprobaste!' : 'Casi... repasemos';
+        $('rNota').textContent = fmtN(st.nota);
+        $('rNota').style.color = pass ? '#81C784' : '#FF8A80';
+        $('rDet').textContent = `Nota · ${st.ok} de ${tot} correctas (${Math.round(p * 100)}%)`;
+        $('rMsg').innerHTML = pass ? 'Muy bien. Completa tu compromiso y firma para recibir tu diploma.'
+          : 'Para aprobar necesitas <b>nota 7,0</b>: todas las respuestas correctas. Tuviste ' + (tot - st.ok) + (tot - st.ok > 1 ? ' respuestas incorrectas' : ' respuesta incorrecta') + '.'
+            + (idx.length ? '<br>Repasa estas láminas:<ul style="text-align:left;margin:6px 0 0 18px">' + idx.slice(0, 5).map(i => '<li>' + L[i].t + '</li>').join('') + '</ul>' : '<br>Repasa las láminas del tema.')
+            + 'Después vuelves a dar la prueba, con preguntas distintas.';
+        $('rPass').style.display = pass ? 'flex' : 'none';
+        $('rFail').style.display = pass ? 'none' : 'flex';
+        show('s-result'); sesBorrar(); st.firmaGuia = false; try { firmaAviso = false; } catch (e) {}
+        SFX.play(pass ? 'win' : 'bad');
+        if (pass) VOZ.say(`¡Aprobaste con nota ${fmtN(st.nota).replace(',', ' coma ')}! Ahora marca los dos compromisos y firma con tu dedo en el recuadro blanco.`, () => { st.firmaGuia = true; guiaFirma(); });
+        else guiar('Para aprobar necesitas nota siete: todas las respuestas correctas. Repasa las láminas y vuelve a intentarlo, con preguntas distintas.', 'bRetry', 'REPASAR', '');
+        if (pass) setTimeout(sizeSig, 60);
+      };
+      const rb = document.getElementById('bRetry'), RB0 = rb && rb.onclick;
+      if (rb) rb.onclick = function (ev) {
+        if (!conNota()) return RB0.call(this, ev);
+        st.attempts++; startLearn();
+        if (st.__repasar > 0 && st.topic.learn[st.__repasar]) { st.li = st.__repasar; renderLearn(); }
+      };
+      // PDF de la prueba respondida (todos los intentos)
+      const pdfPrueba = () => {
+        const o = actual(); if (!o.intentos.length || !window.jspdf) return null;
+        const { jsPDF } = window.jspdf, pdf = new jsPDF({ unit: 'mm', format: 'a4' }), W = 210, mx = 14;
+        const hex = h => { h = String(h || '#263238').replace('#', ''); return [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); };
+        const c1 = hex(M.c1 || '#263238'), c2 = hex(M.c2 || '#FFC20E');
+        const f = d => { d = new Date(d); return dmy(d) + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+        let y = 0, pag = 1;
+        const pie = () => { pdf.setFontSize(7.5); pdf.setTextColor(120); pdf.text('Prueba respondida · ' + (M.nombre || '') + ' · Código ' + (st.code || '') + ' · Página ' + pag, W / 2, 290, { align: 'center' }); };
+        const cab = primera => {
+          pdf.setFillColor(...c1); pdf.rect(0, 0, W, primera ? 30 : 14, 'F'); pdf.setFillColor(...c2); pdf.rect(0, primera ? 30 : 14, W, 1.6, 'F');
+          pdf.setTextColor(255); pdf.setFont('helvetica', 'bold');
+          if (primera) { pdf.setFontSize(16); pdf.text('PRUEBA RESPONDIDA', mx, 13); pdf.setFontSize(11); pdf.text(st.topic.title, mx, 21, { maxWidth: W - 2 * mx }); pdf.setFontSize(9); pdf.setFont('helvetica', 'normal'); pdf.text(M.nombre || '', W - mx, 13, { align: 'right' }); y = 40; }
+          else { pdf.setFontSize(10); pdf.text('Prueba respondida · ' + st.topic.title, mx, 9); y = 22; }
+        };
+        const nueva = () => { pie(); pdf.addPage(); pag++; cab(false); };
+        const linea = (t, o2) => { o2 = o2 || {}; pdf.setFont('helvetica', o2.b ? 'bold' : 'normal'); pdf.setFontSize(o2.s || 9.5); pdf.setTextColor(...(o2.c || [38, 50, 56]));
+          const ls = pdf.splitTextToSize(t, W - 2 * mx - (o2.ind || 0)); ls.forEach(l => { if (y > 278) nueva(); pdf.text(l, mx + (o2.ind || 0), y); y += (o2.s || 9.5) * 0.45; }); };
+        cab(true);
+        const ult = o.intentos[o.intentos.length - 1];
+        [['Trabajador', st.name], ['RUT', st.rut], ['Fecha', f(st.date || Date.now())], ['Resultado', 'APROBADO · Nota ' + fmtN(ult.nota || 7) + ' (' + (ult.ok ?? '') + ' de ' + (ult.tot ?? '') + ')'], ['Intentos', String(o.intentos.length)], ['Código del diploma', st.code || '']]
+          .forEach(([a, b]) => { pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9.5); pdf.setTextColor(90); pdf.text(a + ':', mx, y); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(38, 50, 56); pdf.text(String(b || ''), mx + 38, y); y += 5.2; });
+        y += 1; linea('Cada intento tiene las preguntas en distinto orden, las alternativas mezcladas y una versión de cada pregunta elegida al azar (indicada entre corchetes). Durante la prueba no se muestran las respuestas correctas.', { s: 8, c: [110, 110, 110] });
+        o.intentos.forEach((it, k) => {
+          y += 4; if (y > 262) nueva();
+          const ap = it.tot && it.ok === it.tot;
+          pdf.setFillColor(...(ap ? [232, 245, 233] : [255, 235, 238])); pdf.rect(mx - 2, y - 4.5, W - 2 * mx + 4, 7, 'F');
+          linea('Intento ' + (k + 1) + ' de ' + o.intentos.length + ' · ' + f(it.ini) + ' · ' + (it.tot ? (ap ? 'APROBADO' : 'NO APROBADO') + ' · Nota ' + fmtN(it.nota) + ' (' + it.ok + ' de ' + it.tot + ' correctas)' : 'sin terminar'), { b: true, s: 10, c: ap ? [27, 94, 32] : [183, 28, 28] });
+          y += 1.5;
+          it.r.slice().sort((a, b) => a.p - b.p).forEach(r => {
+            if (y > 262) nueva();
+            linea(r.p + '. ' + r.q + (r.nv > 1 ? '  [pregunta ' + r.n + ', versión ' + r.ver + ']' : '  [pregunta ' + r.n + ']'), { b: true, s: 9.3 });
+            r.ops.forEach(op => {
+              const el = op === r.eleg, co = op === r.corr;
+              linea((el ? '(X) ' : '(  ) ') + op + (el ? (r.ok ? '   <- respondió: CORRECTA' : '   <- respondió: INCORRECTA') : (co && !r.ok ? '   (correcta)' : '')), { ind: 4, s: 8.8, c: el ? (r.ok ? [27, 94, 32] : [183, 28, 28]) : co && !r.ok ? [27, 94, 32] : [69, 90, 100] });
+            });
+            y += 1.6;
+          });
+        });
+        try { if (_sig) { if (y > 250) nueva(); y += 4; pdf.addImage(_sig.toDataURL('image/png'), 'PNG', mx, y, 60, 21); y += 24; pdf.setDrawColor(150); pdf.line(mx, y, mx + 60, y); y += 4; linea('Firma del trabajador · ' + st.name, { s: 8.5 }); } } catch (e) {}
+        pie();
+        return pdf;
+      };
+      const nombrePrueba = () => `Prueba ${st.name} ${String(st.topic.title).replace(/[:/\\]/g, '')} ${dmy(st.date || new Date())}.pdf`;
+      const F0 = window.fetch;
+      window.fetch = function (u, op) {
+        try {
+          if (op && op.method === 'POST' && typeof op.body === 'string' && String(u) === String(SCRIPT_URL) && op.body.indexOf('"diploma"') >= 0 && st.mode !== 'ds44') {
+            const d = JSON.parse(op.body);
+            if (!d.accion && !d.prueba) { const p = pdfPrueba(); if (p) { d.prueba = p.output('datauristring').split(',')[1]; d.archivo_prueba = nombrePrueba(); const o = actual(); d.intentos = o.intentos.length || d.intentos; op = Object.assign({}, op, { body: JSON.stringify(d) }); log.borrar(); } }
+          }
+        } catch (e) {}
+        return F0.call(this, u, op);
+      };
+      window.MJ_EVAL = { registrar, pdfPrueba, construir, log };
     }
   } catch (e) {}
 })();
