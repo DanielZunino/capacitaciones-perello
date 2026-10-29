@@ -337,3 +337,66 @@
     }
   } catch (e) {}
 })();
+
+// ---------- 10) Grúa horquilla: racks de planta (cajas de conservas y bins, no ferretería) y curso del operador en "Grúa horquilla"
+(function () {
+  try {
+    const AZb = '#1565C0';
+    const binR = (x, y, w, h) => `<rect x="${x}" y="${y - h}" width="${w}" height="${h}" rx="2" fill="#1E88E5" stroke="#0D47A1" stroke-width=".8"/>` + [1, 2, 3].map(i => `<line x1="${x + i * w / 4}" y1="${y - h + 2}" x2="${x + i * w / 4}" y2="${y - 2}" stroke="#0D47A1" stroke-width=".6"/>`).join('') + `<rect x="${x}" y="${y - h}" width="${w}" height="3" fill="#1565C0"/>`;
+    const cajaC = (x, y, w, h) => `<rect x="${x}" y="${y - h}" width="${w}" height="${h}" fill="#D7B98E" stroke="#8D6E3F" stroke-width=".7"/><rect x="${x}" y="${y - h * .62}" width="${w}" height="${h * .26}" fill="#C62828" opacity=".85"/><line x1="${x + w / 2}" y1="${y - h}" x2="${x + w / 2}" y2="${y}" stroke="#8D6E3F" stroke-width=".5"/>`;
+    const rackP = (x, y, w, h) => {
+      let s = `<rect x="${x}" y="${y - h}" width="5" height="${h}" fill="${AZb}"/><rect x="${x + w - 5}" y="${y - h}" width="5" height="${h}" fill="${AZb}"/>`;
+      const lv = 3, ih = Math.min(22, (h - 8) / lv - 6);
+      for (let i = 0; i < lv; i++) {
+        const by = y - 4 - i * (h - 8) / lv; s += `<rect x="${x}" y="${by}" width="${w}" height="4" fill="#FF8F00"/>`;
+        const iw = w - 12, n = Math.max(1, Math.floor(iw / 26)), cw = iw / n;
+        for (let c = 0; c < n; c++) { const cx = x + 6 + c * cw; s += (i + c) % 2 ? binR(cx + 1, by, cw - 2, ih) : cajaC(cx + 1, by, cw - 2, ih * .55) + cajaC(cx + 1, by - ih * .55, cw - 2, ih * .45); }
+      }
+      return s;
+    };
+    const A = { horquilla_portada: [196, 150, 120, 126], horquilla_autorizado: [250, 150, 66, 120], horquilla_cinturon: [4, 150, 60, 110], horquilla_vision: [4, 150, 54, 110], horquilla_personas: [262, 150, 56, 140], horquilla_q_vision: [4, 150, 54, 110], horquilla_q_pers: [196, 150, 120, 140] };
+    const cambiaRack = (svg, [x, y, w, h]) => {
+      const i0 = svg.indexOf(`<rect x="${x}" y="${y - h}" width="5" height="${h}"`); if (i0 < 0) return svg;
+      const by2 = y - 4 - 2 * (h - 8) / 3, k = svg.indexOf(`<rect x="${x + 60}" y="${by2 - 18}" width="50" height="18"`, i0); if (k < 0) return svg;
+      let e = svg.indexOf('/>', k) + 2; e = svg.indexOf('/>', e) + 2;   // caja = 2 rect
+      return svg.slice(0, i0) + rackP(x, y, w, h) + svg.slice(e);
+    };
+    Object.keys(A).forEach(k => { const f = S[k]; if (typeof f !== 'function') return; S[k] = function () { return cambiaRack(f.apply(this, arguments), A[k]); }; });
+
+    // Curso del operador (sección "Grúa horquilla"), con ejemplos de la planta
+    if (!TOPICS.some(t => t.id === 'grua_operacion')) {
+      const VF = (q, v, s, w) => ({ q, s, vf: v, w });
+      const t = { id: 'grua_operacion', title: 'Operación segura de grúa horquilla', sec: 'grua', thumb: 'horquilla_portada', mins: 6,
+        learn: [
+          { s: 'horquilla_autorizado', t: 'Solo opera quien está autorizado', x: 'Para operar la grúa en Perelló se exige <b>licencia clase D</b> (maquinaria automotriz, Ley de Tránsito) y además <b>estar capacitado y autorizado por la empresa</b>. Nadie más se sube a manejarla, ni "un ratito", ni para moverla un metro.', k: 'Clase D, capacitado y autorizado: si no, no se opera.' },
+          { s: 'horquilla_cinturon', t: 'Cinturón: siempre puesto', x: 'Si la grúa se vuelca, el cinturón te mantiene <b>dentro de la cabina, bajo el techo protector</b>. Sin cinturón, el cuerpo sale disparado y la máquina cae encima. Por eso va puesto <b>en todo recorrido</b>, aunque sea corto o dentro de la bodega.', k: 'El cinturón te deja bajo el techo protector.' },
+          { s: 'horquilla_centro', t: 'Placa de carga y centro de carga', x: 'La <b>placa de capacidad</b> indica cuántos kilos levanta la grúa, a qué <b>centro de carga</b> y hasta qué altura. La grúa funciona como un <b>balancín</b>: el eje delantero es el apoyo y el contrapeso va atrás. Si la carga queda <b>más lejos</b> (en las puntas, o un bin mal tomado), soporta <b>menos kilos</b>. Pégala al respaldo y <b>nunca superes la placa</b>.', k: 'Carga lejos = menos capacidad. Nunca superes la placa.' },
+          { s: 'horquilla_vision', t: 'Si la carga tapa la vista: en reversa', x: 'Dos bins apilados te tapan la visión hacia adelante. Entonces <b>avanza en reversa</b>, mirando hacia donde vas. Si igual no ves bien, pide a un compañero que te guíe. <b>Nunca avances a ciegas</b> esperando que los demás se corran.', k: 'Si no ves hacia adelante, anda en reversa.' },
+          { s: 'horquilla_bajas', t: 'Horquillas bajas al circular', x: '<ul><li>Lleva las horquillas <b>bajas, cerca del piso</b>, y el mástil inclinado hacia atrás.</li><li>Sube la carga <b>solo frente al rack o la ruma</b>, detenido.</li><li>No gires con la carga en alto.</li><li>Ve a velocidad moderada, según las reglas internas de la planta.</li></ul>Carga baja: la grúa es más estable y ves mejor.', k: 'Carga baja, velocidad moderada, atención alta.' },
+          { s: 'horquilla_rampa', t: 'Pendientes y rampas', x: 'En una rampa, <b>con carga, la carga siempre va hacia arriba</b>: sube de frente y baja en reversa. Así no se cae de las horquillas. <ul><li>Nunca gires ni cruces de lado en una pendiente.</li><li>Sin carga, las horquillas van hacia abajo de la pendiente.</li></ul>', k: 'Con carga en rampa: la carga mira hacia arriba.' },
+          { s: 'horquilla_vuelco', t: 'Volcamiento lateral', x: 'La grúa se puede volcar hacia el lado al <b>girar rápido</b>, al girar con la <b>carga en alto</b>, al pasar por <b>hoyos, lomos o pisos mojados</b>, o al andar de lado en una pendiente. Si se vuelca: <b>no saltes</b>. Quédate dentro con el cinturón, <b>afírmate al volante</b>, apoya los pies e inclínate al lado contrario.', k: 'Si se vuelca: no saltes, afírmate y quédate dentro.' },
+          { s: 'horquilla_personas', t: 'Nunca levantar personas', x: 'Las horquillas son para cargas. <b>Nunca levantes a una persona</b> sobre las horquillas, sobre un pallet o dentro de un bin para alcanzar algo del rack, ni la lleves de pasajero. No tiene baranda ni sujeción: un movimiento y cae desde altura. Para subir, se usa el <b>equipo diseñado para personas</b>. <b>Subirse a las horquillas es una falta grave que puede ser sancionada drásticamente.</b>', k: 'Las horquillas son para cargas, nunca para personas.' },
+          { s: 'horquilla_estacionar', t: 'Al estacionar', x: '<ul><li>Horquillas <b>apoyadas en el piso</b>.</li><li><b>Freno de estacionamiento</b> puesto.</li><li>Motor apagado y <b>llave retirada</b>.</li><li>Lejos de salidas, extintores, pasillos y cruces.</li></ul>Así nadie tropieza con las horquillas y nadie no autorizado la puede mover.', k: 'Horquillas al piso, freno puesto y llave fuera.' },
+          { s: 'horquilla_auto', t: 'Autocuidado: tú decides', x: 'La mayoría de los accidentes se relacionan con una acción insegura. Con la grúa, las típicas son <b>apurarse</b> porque hay un camión esperando o la línea necesita bins, girar rápido con carga y <b>no ponerse el cinturón</b> "porque es corto". La decisión segura: <b>trabajar con calma</b>. Avisa a tu jefatura o al asesor en prevención los pisos dañados y las fallas.', k: 'El apuro no carga más rápido: carga accidentes.' }
+        ],
+        quiz: [
+          { q: '¿Quién puede operar la grúa horquilla en la planta?', s: 'horquilla_q_quien', o: ['Cualquiera que sepa manejar auto', 'Quien tiene licencia clase D y está capacitado y autorizado por la empresa', 'El que esté más cerca cuando se necesite'], a: 1, w: 'Solo opera quien está capacitado y autorizado por la empresa. La Ley de Tránsito asigna a esta maquinaria la licencia clase D.' },
+          { q: '¿Cuál es la forma correcta de circular con carga?', pick: ['horquilla_altas', 'horquilla_bajas_ok'], a: 1, w: 'Con la carga baja, la grúa es más estable y ves mejor. Se sube solo frente al rack, detenido.' },
+          { q: 'Llevas dos bins apilados que no te dejan ver hacia adelante. ¿Qué haces?', s: 'horquilla_q_vision', o: ['Avanzo igual, tocando la bocina', 'Avanzo en reversa, mirando hacia donde voy', 'Subo la carga para mirar por debajo'], a: 1, w: 'Con la vista tapada se avanza en reversa. Si igual no ves, pide que alguien te guíe.' },
+          { q: '¿Cuál es la forma correcta de llevar el bin?', pick: ['horquilla_centro_mal', 'horquilla_centro_bien'], a: 1, w: 'La carga va pegada al respaldo. En las puntas, el centro de carga se aleja, la grúa soporta menos y se puede ir hacia adelante.' },
+          { q: 'Debes bajar una rampa con un bin cargado. ¿Cómo lo haces?', s: 'horquilla_q_rampa', o: ['De frente, con la carga hacia abajo', 'En reversa, con la carga hacia arriba de la rampa', 'De lado, para ir más despacio'], a: 1, w: 'Con carga, la carga siempre va hacia arriba de la pendiente: se sube de frente y se baja en reversa.' },
+          { q: 'La grúa empieza a volcarse hacia un lado. ¿Qué haces?', s: 'horquilla_vuelco', o: ['Salto rápido hacia afuera', 'Me quedo dentro con el cinturón, me afirmo y me inclino al lado contrario', 'Suelto el volante y me agacho'], a: 1, w: 'Saltar es lo más peligroso: la máquina y el techo protector te pueden aplastar.' },
+          VF('Un compañero puede subirse a un bin sobre las horquillas para sacar algo del rack, si subo despacio.', false, 'horquilla_q_pers', 'Falso. Las horquillas son para cargas. Nunca se levanta a una persona con la grúa.'),
+          VF('En recorridos cortos dentro de la bodega puedo andar sin cinturón.', false, 'horquilla_portada', 'Falso. Un vuelco ocurre en segundos, también en recorridos cortos. El cinturón va siempre.'),
+          { q: 'Terminas tu turno. ¿Cómo dejas la grúa?', s: 'horquilla_q_estac', o: ['Horquillas en el piso, freno puesto, motor apagado y llave fuera', 'Con las horquillas a media altura para la próxima carga', 'Encendida, por si alguien la necesita'], a: 0, w: 'Así nadie tropieza con las horquillas y nadie no autorizado la puede mover.' },
+          { q: 'Hay un camión esperando y te piden "apurarte". ¿Cuál es la decisión segura?', s: 'horquilla_q_apuro', o: ['Girar más rápido con la carga en alto', 'Trabajar con calma: carga baja, velocidad moderada y cinturón', 'Llevar más bins de los que permite la placa'], a: 1, w: 'Apurarse es la acción insegura típica. Unos minutos de espera valen menos que un vuelco.' }
+        ] };
+      const norma = { obj: 'Que el operador de grúa horquilla opere de forma segura en la planta, bodega y patio: requisitos para operar, capacidad de carga, estabilidad, visibilidad, rampas, volcamiento y estacionamiento.',
+        n: ['Ley 18.290 de Tránsito: la licencia clase D corresponde a la conducción de maquinaria automotriz, como la grúa horquilla.', 'Requisito de la empresa: solo opera la grúa quien está capacitado y autorizado por la empresa.', 'Código del Trabajo, art. 184: el empleador debe tomar todas las medidas necesarias para proteger eficazmente la vida y salud de los trabajadores.', 'DS 594/1999 MINSAL, arts. 36, 37 y 42: máquinas en condiciones seguras, eliminar factores de peligro y almacenamiento seguro de materiales.', 'DS 44/2023 MINTRAB, arts. 15 y 16: informar los riesgos laborales y capacitar según los riesgos del puesto.'] };
+      const j = TOPICS.findIndex(x => x.sec === 'grua');
+      if (j >= 0) TOPICS.splice(j, 0, t); else TOPICS.push(t);
+      if (typeof NORMAS !== 'undefined') NORMAS[t.id] = norma;
+      if (typeof renderHome === 'function') try { renderHome(); } catch (e) {}
+    }
+  } catch (e) { console.log('perello_extra 10: ' + e); }
+})();
