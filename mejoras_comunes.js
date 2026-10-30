@@ -7,6 +7,9 @@
 // 5) Dibujos más vivos: ✓/✗ que laten y logo de la empresa en los camiones.
 // 6) Láminas: al volver atrás, botón para regresar de inmediato a la lámina donde iba (las ya vistas no esperan de nuevo).
 // 7) Prueba: se aprueba solo con 7,0; preguntas y alternativas al azar (con versiones); no muestra la correcta; PDF con la prueba respondida a Drive.
+// 14) Aviso "aquí no se escucha la lectura": solo si de verdad no hay voz (no aparece en Chrome cuando la lectura funciona).
+// 15) Sin recuadros "Idea clave": solo queda un aviso "Importante" en las láminas más críticas (máx. 2 por charla).
+// 16) Diploma: no muestra los minutos en plataforma (solo la duración oficial de la charla).
 // 8) Inducción: 1 pregunta por cada uno de los 18 ítems de la inducción escrita, con 3 versiones (Constructor, OYM, Plaza y PROSIP).
 // Se carga desde https://danielzunino.github.io/capacitaciones-perello/mejoras_comunes.js en todos los portales.
 (function () {
@@ -44,6 +47,7 @@
   } catch (e) {}
   // ---------- 1) Pronunciación chilena de siglas
   const PRON = [
+    [/\b([Nn]ota) (\d),0\b/g, '$1 $2'], [/(\d) coma 0\b/g, '$1'], [/(\d),(\d)/g, '$1 coma $2'], [/(\d)\s?%/g, '$1 por ciento'], [/(\d+)\/(\d{4})\b/g, '$1 de $2'],
     [/\bE P P\b/g, 'e pe pe'], [/\bEPP\b/g, 'e pe pe'], [/\bA C H S\b/g, 'achs'], [/\bACHS\b/g, 'achs'], [/\bIST\b/g, 'i ese te'], [/\bISL\b/g, 'i ese ele'],
     [/\bSAMU\b/g, 'samu'], [/\bPDI\b/g, 'pe de i'], [/\bHDS\b/g, 'hache de ese'], [/\bSGA\b/g, 'ese ge a'], [/\bMIPER\b/g, 'míper'], [/\bIRL\b/g, 'i erre ele'],
     [/\bPREXOR\b/g, 'préxor'], [/\bCEAL-SM\b/g, 'ceal ese eme'], [/\bSUSESO\b/g, 'suseso'], [/\bISTAS ?21\b/g, 'istas veintiuno'], [/\bSEREMI\b/g, 'seremi'],
@@ -547,5 +551,71 @@
       };
       renderLearn.__mjAviso = true; renderLearn.__mj = true;
     }
+  } catch (e) {}
+  // ---------- 14) Aviso "Aquí no se escucha la lectura": aparece solo si de verdad no hay voz
+  //  Antes bastaba que la voz tardara más de 4,5 s en partir (pasa en Chrome de escritorio con voces en línea) para mostrarlo.
+  //  Ahora: si alguna lectura ya sonó, o está sonando, no aparece nunca; y si la voz parte después, el aviso se cierra solo.
+  try {
+    const ss = window.speechSynthesis;
+    window.__vozOk = false;
+    const ocultarAviso = () => { const el = document.getElementById('vozBanner'); if (el) el.style.display = 'none'; document.body.classList.remove('conaviso'); };
+    const vozSono = () => { window.__vozOk = true; try { vozFallas = 0; } catch (e) {} ocultarAviso(); };
+    if (ss && !ss.__mjAviso) {
+      const sp = ss.speak.bind(ss);
+      ss.speak = function (u) {
+        try { const t0 = Date.now(); u.addEventListener('start', vozSono); u.addEventListener('boundary', vozSono); u.addEventListener('end', () => { if (Date.now() - t0 > 900) vozSono(); }); } catch (e) {}
+        return sp(u);
+      };
+      ss.__mjAviso = true;
+    }
+    if (typeof avisoVoz === 'function' && !avisoVoz.__mj) {
+      const A0 = avisoVoz;
+      const sinVoz = () => !(window.__vozOk || (ss && (ss.speaking || ss.pending)));
+      avisoVoz = function () {
+        const a = arguments, self = this;
+        if (!sinVoz()) { try { vozFallas = 0; } catch (e) {} return; }
+        setTimeout(() => { if (sinVoz()) A0.apply(self, a); else { try { vozFallas = 0; } catch (e) {} } }, 4000);
+      };
+      avisoVoz.__mj = true;
+    }
+  } catch (e) {}
+  // ---------- 15) Fuera los recuadros "Idea clave": solo un "Importante" en lo más crítico (máximo 2 por charla)
+  try {
+    const CRIT = /nunca|jam[aá]s|bloque|energ[ií]a|atrap|aplast|radio de giro|altura|arn[eé]s|ca[ií]da|el[eé]ctric|incendio|emergencia|evacua|alcohol|drogas|detente|det[eé]n|prohibid|bajo (la |una |un )?carga|nadie|vida|grave|muerte|sin autorizaci|no autorizad|celular|cintur[oó]n/i;
+    const elegidas = t => {
+      if (t.__mjCrit) return t.__mjCrit;
+      const cand = (t.learn || []).map((c, i) => ({ i, k: c.k || '', p: (c.k && CRIT.test(c.k)) ? 1 : 0 })).filter(o => o.p > 0);
+      cand.sort((a, b) => b.p - a.p || a.i - b.i);
+      return (t.__mjCrit = new Set(cand.slice(0, 2).map(o => o.i)));
+    };
+    if (typeof renderLearn === 'function' && !renderLearn.__mjKey) {
+      const RL3 = renderLearn;
+      renderLearn = function () {
+        const t = st.topic, L = (t && t.learn) || [], c = L[st.li], k = c && c.k, sel = t ? elegidas(t) : new Set(), crit = sel.has(st.li);
+        if (c && k && !crit) c.k = '';
+        try { RL3.apply(this, arguments); } finally { if (c) c.k = k; }
+        try {
+          const el = document.querySelector('#lCard .key');
+          if (el && crit) {
+            const tx = String(k).replace(/"/g, '');
+            el.dataset.voz = 'Importante: ' + tx;
+            el.innerHTML = '<span style="color:#C62828">⚠️ Importante:</span> ' + k;
+            el.style.cssText += ';background:#FFF3F0;border-left-color:#D32F2F;color:#3E2723';
+          }
+        } catch (e) {}
+      };
+      renderLearn.__mjKey = true; renderLearn.__mj = true; renderLearn.__mjAviso = true;
+    }
+  } catch (e) {}
+  // ---------- 16) Diploma: fuera "· N min en plataforma" (queda solo la duración oficial de la charla)
+  try {
+    const RXp = /\s*·\s*\d+\s*min en plataforma/g, limpiaP = t => typeof t === 'string' ? t.replace(RXp, '') : t;
+    const C2 = window.CanvasRenderingContext2D && CanvasRenderingContext2D.prototype;
+    if (C2 && !C2.__mjPlat) {
+      ['fillText', 'strokeText', 'measureText'].forEach(m => { const f = C2[m]; if (typeof f === 'function') C2[m] = function (t) { const a = Array.prototype.slice.call(arguments); a[0] = limpiaP(t); return f.apply(this, a); }; });
+      C2.__mjPlat = true;
+    }
+    const J = () => { try { const P = window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API; if (P && P.text && !P.text.__mjPlat) { const t0 = P.text; P.text = function (t) { const a = Array.prototype.slice.call(arguments); a[0] = Array.isArray(t) ? t.map(limpiaP) : limpiaP(t); return t0.apply(this, a); }; P.text.__mjPlat = true; } } catch (e) {} };
+    J(); setTimeout(J, 1500); window.addEventListener('load', J);
   } catch (e) {}
 })();
