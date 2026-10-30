@@ -11,6 +11,7 @@
 // 15) Sin recuadros "Idea clave": solo queda un aviso "Importante" en las láminas más críticas (máx. 2 por charla).
 // 16) Diploma: no muestra los minutos en plataforma (solo la duración oficial de la charla).
 // 17) Diploma y certificado: entrega GARANTIZADA al servidor (cola en el teléfono, se confirma con el registro oficial y se reintenta hasta que quede guardado).
+// 18) Nombres de archivo cortos: "Diploma Juan Campos Induccion IRL 30-10-2026.pdf" (diploma, prueba y certificado DS 44).
 // 8) Inducción: 1 pregunta por cada uno de los 18 ítems de la inducción escrita, con 3 versiones (Constructor, OYM, Plaza y PROSIP).
 // Se carga desde https://danielzunino.github.io/capacitaciones-perello/mejoras_comunes.js en todos los portales.
 (function () {
@@ -329,7 +330,7 @@
         pie();
         return pdf;
       };
-      const nombrePrueba = () => `Prueba ${st.name} ${String(st.topic.title).replace(/[:/\\]/g, '')} ${dmy(st.date || new Date())}.pdf`;
+      const nombrePrueba = () => (window.MJ_NOMBRE ? window.MJ_NOMBRE('Prueba') : `Prueba ${st.name} ${String(st.topic.title).replace(/[:/\\]/g, '')} ${dmy(st.date || new Date())}.pdf`);
       const F0 = window.fetch;
       window.fetch = function (u, op) {
         try {
@@ -668,6 +669,37 @@
       };
       // al abrir el portal: reenvía lo que haya quedado pendiente en este teléfono
       setTimeout(async () => { try { const L = await todos(); for (const it of L) { if (Date.now() - (it.t || 0) > 60 * 24 * 3600 * 1000) { await quitar(it.codigo); continue; } await entregar(it, false); } } catch (e) {} }, 4000);
+    }
+  } catch (e) {}
+  // ---------- 18) Nombres de archivo cortos (diploma, prueba respondida y certificado DS 44)
+  //  Antes: "Diploma Juan Andres Campos Garrido Inducción de Prevención de Riesgos (IRL) 30-10-2026.pdf"
+  //  Ahora: "Diploma Juan Campos Induccion IRL 30-10-2026.pdf" (primer nombre + primer apellido + tema corto + fecha; sin tildes)
+  try {
+    const sinTilde = x => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[\\/:*?"<>|()]/g, '').replace(/\s+/g, ' ').trim();
+    const cap = w => w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : '';
+    const nomCorto = n => { const p = String(n || '').trim().split(/\s+/).filter(Boolean); const k = p.length >= 4 ? [p[0], p[2]] : p.length === 3 ? [p[0], p[1]] : p; return k.map(cap).join(' '); };
+    const fecha = d => { d = d instanceof Date ? d : new Date(d || Date.now()); return [d.getDate(), d.getMonth() + 1].map(v => String(v).padStart(2, '0')).join('-') + '-' + d.getFullYear(); };
+    const temaCorto = () => { if (st.mode === 'ds44') return 'Curso DS44'; const id = String((st.topic && st.topic.id) || ''); if (id === 'induccion') return 'Induccion IRL'; if (/^ds44_/.test(id)) return 'DS44 ' + cap(id.slice(5)); return id.split('_').map(cap).join(' ') || 'Charla'; };
+    window.MJ_NOMBRE = tipo => sinTilde(`${tipo} ${nomCorto(st.name)} ${temaCorto()} ${fecha(st.date)}`) + '.pdf';
+    const corto = nombre => { try { const n = String(nombre || ''); if (/^Diploma /.test(n)) return window.MJ_NOMBRE('Diploma'); if (/^Certificado DS ?44 /i.test(n)) return sinTilde(`Certificado DS44 ${nomCorto(st.name)} ${fecha(st.date)}`) + '.pdf'; if (/^Prueba /.test(n)) return window.MJ_NOMBRE('Prueba'); } catch (e) {} return nombre; };
+    // archivo que se guarda en Drive (lo que se envía al servidor)
+    if (!window.__mjNombres) {
+      window.__mjNombres = true;
+      const F1 = window.fetch;
+      window.fetch = function (url, opt) {
+        try {
+          if (opt && String(opt.method || '').toUpperCase() === 'POST' && typeof SCRIPT_URL === 'string' && String(url).indexOf(SCRIPT_URL) === 0 && typeof opt.body === 'string' && opt.body.indexOf('"archivo"') >= 0) {
+            const o = JSON.parse(opt.body);
+            if (o.archivo) { o.archivo = corto(o.archivo); opt = Object.assign({}, opt, { body: JSON.stringify(o) }); }
+          }
+        } catch (e) {}
+        return F1.call(this, url, opt);
+      };
+      // archivo que descarga el trabajador
+      const clk = HTMLAnchorElement.prototype.click;
+      HTMLAnchorElement.prototype.click = function () { try { if (this.download) this.download = corto(this.download); } catch (e) {} return clk.apply(this, arguments); };
+      const F0 = window.File;
+      if (F0) { const FC = function (bits, name, o) { return new F0(bits, corto(name), o); }; FC.prototype = F0.prototype; window.File = FC; }
     }
   } catch (e) {}
 })();
