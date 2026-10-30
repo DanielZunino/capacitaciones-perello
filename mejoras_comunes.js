@@ -12,6 +12,7 @@
 // 16) Diploma: no muestra los minutos en plataforma (solo la duración oficial de la charla).
 // 17) Diploma y certificado: entrega GARANTIZADA al servidor (cola en el teléfono, se confirma con el registro oficial y se reintenta hasta que quede guardado).
 // 18) Nombres de archivo cortos: "Diploma Juan Campos Induccion IRL 30-10-2026.pdf" (diploma, prueba y certificado DS 44).
+// 19) Diploma, registro y certificados en vector: textos nítidos a cualquier zoom y PDF unas 20 veces más liviano; registro sin "Idea clave".
 // 8) Inducción: 1 pregunta por cada uno de los 18 ítems de la inducción escrita, con 3 versiones (Constructor, OYM, Plaza y PROSIP).
 // Se carga desde https://danielzunino.github.io/capacitaciones-perello/mejoras_comunes.js en todos los portales.
 (function () {
@@ -701,5 +702,182 @@
       const F0 = window.File;
       if (F0) { const FC = function (bits, name, o) { return new F0(bits, corto(name), o); }; FC.prototype = F0.prototype; window.File = FC; }
     }
+  } catch (e) {}
+})();
+
+// 19) Diploma, registro y certificados en VECTOR: textos y líneas nítidos a cualquier zoom y archivos mucho más livianos
+//     (se graba lo que se dibuja en el lienzo y se reproduce en el PDF; si algo no se puede, queda la imagen de siempre).
+(function () {
+  try {
+    if (window.__mjVec) return; window.__mjVec = true;
+    const OPS = new WeakMap();          // lienzo -> { ops, w, h, bad }
+    const URLS = new Map();             // dataURL -> lienzo
+    const recCanvas = cv => {
+      if (OPS.has(cv)) return;
+      const R = { ops: [], bad: false }; OPS.set(cv, R);
+      const g0 = cv.getContext;
+      cv.getContext = function (t) {
+        const c = g0.apply(this, arguments);
+        if (t !== '2d' || !c) { R.bad = true; return c; }
+        if (c.__mjP) return c.__mjP;
+        const P = new Proxy(c, {
+          get(o, k) { const v = o[k]; if (typeof v !== 'function') return v; return function () {
+            const a = Array.prototype.slice.call(arguments);
+            if (k === 'fillText') { const st = o.font; a[0] = typeof a[0] === 'string' ? fixT(a[0].replace(/\s*·\s*\d+\s*min en plataforma/g, '')) : a[0]; let mw = o.measureText(String(a[0])).width; const lim = o.canvas.width * 0.86; if (a[3] == null && o.textAlign === 'center' && mw > lim) a[3] = lim; if (a[3] != null && mw > a[3]) mw = +a[3]; R.ops.push(['t', a[0], a[1], a[2], mw, st, o.textAlign, o.textBaseline, o.fillStyle, o.letterSpacing || '0px']); }
+            else if (k === 'drawImage') { const s = a[0], Rs = OPS.get(s); R.ops.push(['i', s, a.slice(1), Rs ? (Rs.ops.length > 300 && s.width * s.height <= 400 * 400 && Rs.ops.filter(o => o[1] === 'fillRect').length > Rs.ops.length * 0.8 ? fino(s, Rs) : null) : snap(s)]); }
+            else if (['measureText', 'getContextAttributes', 'isPointInPath', 'isPointInStroke', 'setLineDash', 'getLineDash'].indexOf(k) < 0) R.ops.push(['m', k, a]);
+            return v.apply(o, a); }; },
+          set(o, k, v) { o[k] = v; R.ops.push(['p', k, v]); return true; }
+        });
+        c.__mjP = P; return P;
+      };
+      const td = cv.toDataURL;
+      cv.toDataURL = function () { const u = td.apply(this, arguments); URLS.set(u, this); if (URLS.size > 8) URLS.delete(URLS.keys().next().value); return u; };
+    };
+    // imágenes externas (logo, firma, sello): copia PNG del momento en que se dibujaron
+    const snap = s => { try { const w = s.naturalWidth || s.videoWidth || s.width, h = s.naturalHeight || s.videoHeight || s.height; if (!w || !h) return null; const k = Math.min(1, 900 / Math.max(w, h)); const c = Document.prototype.createElement.call(document, 'canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k); c.getContext('2d').drawImage(s, 0, 0, c.width, c.height); return { u: c.toDataURL('image/png'), w, h }; } catch (e) { return null; } };
+    // dibujos con miles de cuadritos (código QR): imagen nítida de alta resolución (en vector quedan líneas finas entre módulos)
+    const fino = (s, Rs) => { try { const k = 6, c = Document.prototype.createElement.call(document, 'canvas'); c.width = s.width * k; c.height = s.height * k; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.scale(k, k);
+      for (const op of Rs.ops) { if (op[0] === 'p') x[op[1]] = op[2]; else if (op[0] === 'm') x[op[1]].apply(x, op[2]); else if (op[0] === 't') x.fillText(op[1], op[2], op[3]); else if (op[0] === 'i') x.drawImage.apply(x, [op[1]].concat(op[2])); }
+      return { u: c.toDataURL('image/png'), w: s.width, h: s.height, fino: true }; } catch (e) { return null; } };
+    // envuelve las funciones que dibujan documentos: todo lienzo creado adentro queda grabado
+    let prof = 0, prevCE = null; const ce = Document.prototype.createElement;
+    const grabando = f => { if (typeof f !== 'function' || f.__mjVec) return f; const g = function () { prof++; if (prof === 1) { prevCE = Object.getOwnPropertyDescriptor(document, 'createElement') || null; const base = prevCE ? prevCE.value : ce; document.createElement = function (n) { const el = base.apply(this, arguments); if (String(n).toLowerCase() === 'canvas') { recCanvas(el); if (alto) { alto = false; alto2(el); } } return el; }; } try { return f.apply(this, arguments); } finally { prof--; if (!prof) { if (prevCE) Object.defineProperty(document, 'createElement', prevCE); else delete document.createElement; } } }; g.__mjVec = true; return g; };
+    // Registro: el lienzo original solo tenía 2 hojas; la inducción ocupa 3 y la última (firmas, código QR y evaluación) se perdía.
+    //   Ahora hay espacio para 4 hojas y se recorta a las que realmente se usan.
+    let alto = false; const HC = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, 'height'), HP = 2339;
+    const alto2 = el => { try { Object.defineProperty(el, 'height', { configurable: true, get() { return HC.get.call(this); }, set(v) { HC.set.call(this, v === HP * 2 ? HP * 4 : v); } }); } catch (e) {} };
+    if (typeof window.registroCanvas === 'function') { const RC0 = window.registroCanvas; window.registroCanvas = function () { alto = true; let out; try { out = RC0.apply(this, arguments); } finally { alto = false; }
+        try { if (out && out.qr && out.height > HP * (out.qr.page + 1) + 10) { const n = out.qr.page + 1, c = document.createElement('canvas'); c.width = out.width; c.height = HP * n; const x = c.getContext('2d'); x.fillStyle = '#ffffff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(out, 0, 0); c.qr = out.qr; return c; } } catch (e) {}
+        return out; }; }
+    ['diplomaCanvas', 'registroCanvas', 'paginas', 'ds44Detail', 'qrCanvas'].forEach(n => { try { if (typeof window[n] === 'function') window[n] = grabando(window[n]); } catch (e) {} });
+
+    // registro: sin el rótulo "Idea clave" (queda "Resumen") y con el criterio real de aprobación (solo 7,0)
+    const fixT = t => t.replace(/Idea clave:\s*/g, 'Resumen: ').replace(/^Escala de 1,0 a 7,0 con exigencia.*$/, 'Se aprueba solo con el 100 % de respuestas correctas (nota 7,0); si no, repasa y repite la evaluación.');
+    try { const C2 = CanvasRenderingContext2D.prototype; ['fillText', 'measureText'].forEach(m => { const f = C2[m]; if (typeof f === 'function' && !f.__mjIC) { const g = function (t) { if (typeof t === 'string' && (t.indexOf('Idea clave') >= 0 || t.indexOf('Escala de 1,0 a 7,0 con exigencia') === 0)) { const a = Array.prototype.slice.call(arguments); a[0] = fixT(t); return f.apply(this, a); } return f.apply(this, arguments); }; g.__mjIC = true; C2[m] = g; } }); } catch (e) {}
+    // ---------- reproducción en el PDF
+    const COL = { white: '#ffffff', black: '#000000', transparent: null };
+    const rgb = v => { if (v == null) return null; let s = String(v).trim().toLowerCase(); if (COL.hasOwnProperty(s)) s = COL[s]; if (s == null) return null;
+      let m = /^#([0-9a-f]{3})$/.exec(s); if (m) return { r: parseInt(m[1][0] + m[1][0], 16), g: parseInt(m[1][1] + m[1][1], 16), b: parseInt(m[1][2] + m[1][2], 16), a: 1 };
+      m = /^#([0-9a-f]{6})([0-9a-f]{2})?$/.exec(s); if (m) return { r: parseInt(m[1].slice(0, 2), 16), g: parseInt(m[1].slice(2, 4), 16), b: parseInt(m[1].slice(4, 6), 16), a: m[2] ? parseInt(m[2], 16) / 255 : 1 };
+      m = /^rgba?\(([^)]+)\)$/.exec(s); if (m) { const p = m[1].split(/[ ,\/]+/).map(parseFloat); return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 }; }
+      throw new Error('color ' + s); };
+    const fuente = css => { const m = /^\s*((?:(?:italic|oblique|bold|bolder|normal|[1-9]00)\s+)*)([\d.]+)px\s+(.+)$/i.exec(css || ''); if (!m) throw new Error('fuente ' + css);
+      const mods = m[1].toLowerCase(), fam = m[3].toLowerCase(); const b = /bold|[7-9]00/.test(mods), it = /italic|oblique/.test(mods);
+      const f = /courier|mono/.test(fam) ? 'courier' : (/^\s*["']?(georgia|times|serif|cambria|garamond|palatino)/.test(fam) ? 'times' : 'helvetica');
+      return { f, st: b && it ? 'bolditalic' : b ? 'bold' : it ? 'italic' : 'normal', px: +m[2] }; };
+    const WIN = /^[ -~ -ÿ€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ]*$/;
+    function play(pdf, R, M, clip) {
+      // M: [a,b,c,d,e,f] lienzo -> mm (sin rotación)
+      const K = 72 / 25.4; let S = { M: M.slice(), fill: '#000000', stroke: '#000000', lw: 1, alpha: 1, font: '10px sans-serif', align: 'start', base: 'alphabetic', ls: '0px', cap: 'butt', join: 'miter' }; const pila = [];
+      let path = [], cur = null, alphaPdf = -1;
+      const T = (x, y) => [S.M[0] * x + S.M[2] * y + S.M[4], S.M[1] * x + S.M[3] * y + S.M[5]];
+      const esc = () => Math.sqrt(Math.abs(S.M[0] * S.M[3] - S.M[1] * S.M[2]));
+      const setA = a => { a = Math.max(0, Math.min(1, a)); if (Math.abs(a - alphaPdf) < 1e-3) return; pdf.setGState(new pdf.GState({ opacity: a, 'stroke-opacity': a })); alphaPdf = a; };
+      const pinta = (modo) => { const c = rgb(modo === 'S' ? S.stroke : S.fill); if (!c) return false; setA(S.alpha * c.a); if (modo === 'S') { pdf.setDrawColor(c.r, c.g, c.b); pdf.setLineWidth(S.lw * esc()); pdf.setLineCap(S.cap); pdf.setLineJoin(S.join); } else pdf.setFillColor(c.r, c.g, c.b); return true; };
+      const emitPath = () => { let any = false; path.forEach(s => { if (s[0] === 'M') { pdf.moveTo(s[1], s[2]); any = true; } else if (s[0] === 'L') pdf.lineTo(s[1], s[2]); else if (s[0] === 'C') pdf.curveTo(s[1], s[2], s[3], s[4], s[5], s[6]); else if (s[0] === 'Z') pdf.close(); }); return any; };
+      const arc = (x, y, r, a0, a1, ccw) => { let d = a1 - a0; if (!ccw && d < 0) d = (d % (2 * Math.PI)) + 2 * Math.PI; if (ccw && d > 0) d = (d % (2 * Math.PI)) - 2 * Math.PI; if (!ccw && a1 - a0 >= 2 * Math.PI) d = 2 * Math.PI; if (ccw && a0 - a1 >= 2 * Math.PI) d = -2 * Math.PI;
+        const n = Math.max(1, Math.ceil(Math.abs(d) / (Math.PI / 2))), h = d / n, k = 4 / 3 * Math.tan(h / 4);
+        let a = a0; const p0 = T(x + r * Math.cos(a), y + r * Math.sin(a)); if (cur) path.push(['L', p0[0], p0[1]]); else path.push(['M', p0[0], p0[1]]);
+        for (let i = 0; i < n; i++) { const b = a + h, c1 = T(x + r * (Math.cos(a) - k * Math.sin(a)), y + r * (Math.sin(a) + k * Math.cos(a))), c2 = T(x + r * (Math.cos(b) + k * Math.sin(b)), y + r * (Math.sin(b) - k * Math.cos(b))), p = T(x + r * Math.cos(b), y + r * Math.sin(b)); path.push(['C', c1[0], c1[1], c2[0], c2[1], p[0], p[1]]); a = b; cur = p; } };
+      const PH = pdf.internal.pageSize.getHeight(); const fuera = (y1, y2) => { const a = T(0, y1)[1], b = T(0, y2)[1]; return Math.max(a, b) < -2 || Math.min(a, b) > PH + 2; };
+      const rectPath = (x, y, w, h) => { const a = T(x, y), b = T(x + w, y), c = T(x + w, y + h), d = T(x, y + h); return [['M', a[0], a[1]], ['L', b[0], b[1]], ['L', c[0], c[1]], ['L', d[0], d[1]], ['Z']]; };
+      const conRect = (segs, modo) => { const p0 = path, c0 = cur; path = segs; if (emitPath()) { if (modo === 'S') pdf.stroke(); else pdf.fill(); } path = p0; cur = c0; };
+      if (clip) { pdf.saveGraphicsState(); path = rectPath(0, 0, clip[0], clip[1]); emitPath(); pdf.clip(); pdf.discardPath(); path = []; alphaPdf = -1; }
+      for (const op of R.ops) {
+        if (op[0] === 'p') { const k = op[1], v = op[2];
+          if (k === 'fillStyle') { if (typeof v !== 'string') throw new Error('fillStyle'); S.fill = v; } else if (k === 'strokeStyle') { if (typeof v !== 'string') throw new Error('strokeStyle'); S.stroke = v; }
+          else if (k === 'lineWidth') S.lw = +v; else if (k === 'globalAlpha') S.alpha = +v; else if (k === 'font') S.font = v; else if (k === 'textAlign') S.align = v; else if (k === 'textBaseline') S.base = v; else if (k === 'letterSpacing') S.ls = v; else if (k === 'lineCap') S.cap = v; else if (k === 'lineJoin') S.join = v;
+          else if (['imageSmoothingEnabled', 'imageSmoothingQuality', 'miterLimit', 'direction', 'fontKerning', 'textRendering', 'wordSpacing'].indexOf(k) >= 0) {}
+          else if (['shadowBlur', 'shadowColor', 'shadowOffsetX', 'shadowOffsetY', 'filter', 'globalCompositeOperation'].indexOf(k) >= 0) { if (!(k === 'globalCompositeOperation' && v === 'source-over') && !(k === 'shadowBlur' && !+v) && !(/shadowOffset/.test(k) && !+v) && k !== 'shadowColor' && !(k === 'filter' && v === 'none')) throw new Error('prop ' + k); }
+          else throw new Error('prop ' + k);
+          continue; }
+        if (op[0] === 't') { const [, txt, x, y, wpx, font, align, base, fill, ls] = op; const s = String(txt); if (!s.trim()) continue; { const fp = (/(\d+(?:\.\d+)?)px/.exec(font) || [0, 40])[1]; if (fuera(y - fp * 1.2, y + fp * 0.4)) continue; }
+          const F = fuente(font), c = rgb(fill); if (!c) continue; const e = esc(), sz = F.px * e * K; let al = align === 'center' ? 'c' : (align === 'right' || align === 'end') ? 'r' : 'l';
+          const p = T(x, y); let yy = p[1]; if (base === 'middle') yy += F.px * e * 0.35; else if (base === 'top' || base === 'hanging') yy += F.px * e * 0.8; else if (base === 'bottom' || base === 'ideographic') yy -= F.px * e * 0.2;
+          const target = wpx * e; let x0 = al === 'c' ? p[0] - target / 2 : al === 'r' ? p[0] - target : p[0];
+          // tramos: texto normal en vector; símbolos y emojis (fuera de la fuente estándar) como imagen nítida pequeña
+          const runs = []; s.split(/([^\u0020-\u007e\u00a0-\u00ff\u20ac\u201a\u0192\u201e\u2026\u2020\u2021\u02c6\u2030\u0160\u2039\u0152\u017d\u2018\u2019\u201c\u201d\u2022\u2013\u2014\u02dc\u2122\u0161\u203a\u0153\u017e\u0178]+)/).forEach((r, i) => { if (r) runs.push([r, i % 2 === 1]); });
+          const lsx = (parseFloat(ls) || 0) * e;
+          let mx = null; const mide = t => { if (runs.length === 1) return wpx; if (!mx) { mx = Document.prototype.createElement.call(document, 'canvas').getContext('2d'); mx.font = font; try { mx.letterSpacing = ls; } catch (er) {} } return mx.measureText(t).width; };
+          const kk = wpx / (mide(s) || wpx); let pre = '';
+          for (const [r, sym] of runs) {
+            const rx = runs.length === 1 ? x0 : x0 + mide(pre) * kk * e, rw = runs.length === 1 ? wpx : mide(r) * kk; pre += r;
+            if (sym) { 
+              const k2 = 5, cc = Document.prototype.createElement.call(document, 'canvas'), h = Math.ceil(F.px * 1.4); cc.width = Math.ceil(rw * k2) + 4; cc.height = Math.ceil(h * k2); const x2 = cc.getContext('2d'); x2.scale(k2, k2); x2.font = font; x2.fillStyle = fill; x2.textBaseline = 'alphabetic'; x2.fillText(r, 0, F.px * 1.05);
+              setA(S.alpha); pdf.addImage(cc.toDataURL('image/png'), 'PNG', rx, yy - F.px * 1.05 * e, cc.width / k2 * e, cc.height / k2 * e, undefined, 'FAST'); continue; }
+            pdf.setFont(F.f, F.st); pdf.setFontSize(sz); setA(S.alpha * c.a); pdf.setTextColor(c.r, c.g, c.b);
+            const wp = pdf.getTextWidth(r), n = r.length, target = rw * e, opt = { baseline: 'alphabetic' };
+            let hs = 1; if (lsx) opt.charSpace = lsx; if (wp > 0 && target > 0) { hs = (target - lsx * n) / wp; if (!(hs > 0.6 && hs < 1.6) || Math.abs(hs - 1) < 0.004) hs = 1; }
+            if (hs !== 1) { pdf.saveGraphicsState(); const sf = pdf.internal.scaleFactor; pdf.setCurrentTransformationMatrix(new pdf.Matrix(hs, 0, 0, 1, rx * sf * (1 - hs), 0)); pdf.text(r, rx, yy, opt); pdf.restoreGraphicsState(); alphaPdf = -1; }
+            else pdf.text(r, rx, yy, opt); }
+          continue; }
+        if (op[0] === 'i') { const [, src, a, img] = op; let sx = 0, sy = 0, sw, sh, dx, dy, dw, dh; const Rs = OPS.get(src);
+          const W0 = Rs ? src.width : (img ? img.w : (src.naturalWidth || src.width)), H0 = Rs ? src.height : (img ? img.h : (src.naturalHeight || src.height));
+          if (a.length === 2) { dx = a[0]; dy = a[1]; sw = dw = W0; sh = dh = H0; } else if (a.length === 4) { dx = a[0]; dy = a[1]; dw = a[2]; dh = a[3]; sw = W0; sh = H0; } else { [sx, sy, sw, sh, dx, dy, dw, dh] = a; }
+          if (!dw || !dh || !sw || !sh) continue; if (fuera(dy, dy + dh)) continue;
+          if (Rs && !(img && img.fino)) { if (Rs.bad) throw new Error('sub'); const kx = dw / sw, ky = dh / sh; const Mi = [S.M[0] * kx, S.M[1] * kx, S.M[2] * ky, S.M[3] * ky, 0, 0]; const o = T(dx - sx * kx, dy - sy * ky); Mi[4] = o[0]; Mi[5] = o[1];
+            // recorte al área visible del lienzo de destino
+            const sub = { ops: Rs.ops }; const c0 = T(dx, dy); pdf.saveGraphicsState(); const p0 = path, cu0 = cur; path = rectPath(dx, dy, dw, dh); emitPath(); pdf.clip(); pdf.discardPath(); path = p0; cur = cu0; alphaPdf = -1;
+            const Mc = [Mi[0], Mi[1], Mi[2], Mi[3], Mi[4], Mi[5]]; play(pdf, sub, Mc, null); pdf.restoreGraphicsState(); alphaPdf = -1; void c0; continue; }
+          if (!img) throw new Error('img');
+          setA(S.alpha); const p = T(dx, dy), e = esc();
+          if (sx || sy || sw !== W0 || sh !== H0) { pdf.saveGraphicsState(); const p0 = path, cu0 = cur; path = rectPath(dx, dy, dw, dh); emitPath(); pdf.clip(); pdf.discardPath(); path = p0; cur = cu0; const kx = dw / sw, ky = dh / sh, q = T(dx - sx * kx, dy - sy * ky); pdf.addImage(img.u, 'PNG', q[0], q[1], W0 * kx * e, H0 * ky * e, undefined, 'FAST'); pdf.restoreGraphicsState(); alphaPdf = -1; }
+          else pdf.addImage(img.u, 'PNG', p[0], p[1], dw * e, dh * e, undefined, 'FAST');
+          continue; }
+        const k = op[1], a = op[2];
+        switch (k) {
+          case 'save': pila.push(Object.assign({}, S, { M: S.M.slice() })); break;
+          case 'restore': if (pila.length) S = pila.pop(); break;
+          case 'translate': S.M[4] += S.M[0] * a[0] + S.M[2] * a[1]; S.M[5] += S.M[1] * a[0] + S.M[3] * a[1]; break;
+          case 'scale': S.M[0] *= a[0]; S.M[1] *= a[0]; S.M[2] *= a[1]; S.M[3] *= a[1]; break;
+          case 'setTransform': if (a.length === 6 && !a[1] && !a[2]) { S.M = [M[0] * a[0], 0, 0, M[3] * a[3], M[0] * a[4] + M[4], M[3] * a[5] + M[5]]; } else throw new Error('setTransform'); break;
+          case 'resetTransform': S.M = M.slice(); break;
+          case 'beginPath': path = []; cur = null; break;
+          case 'moveTo': { const p = T(a[0], a[1]); path.push(['M', p[0], p[1]]); cur = p; break; }
+          case 'lineTo': { const p = T(a[0], a[1]); path.push([cur ? 'L' : 'M', p[0], p[1]]); cur = p; break; }
+          case 'bezierCurveTo': { const c1 = T(a[0], a[1]), c2 = T(a[2], a[3]), p = T(a[4], a[5]); if (!cur) path.push(['M', c1[0], c1[1]]); path.push(['C', c1[0], c1[1], c2[0], c2[1], p[0], p[1]]); cur = p; break; }
+          case 'quadraticCurveTo': { const q = T(a[0], a[1]), p = T(a[2], a[3]); const c0 = cur || q; path.push(['C', c0[0] + 2 / 3 * (q[0] - c0[0]), c0[1] + 2 / 3 * (q[1] - c0[1]), p[0] + 2 / 3 * (q[0] - p[0]), p[1] + 2 / 3 * (q[1] - p[1]), p[0], p[1]]); cur = p; break; }
+          case 'arc': arc(a[0], a[1], a[2], a[3], a[4], !!a[5]); break;
+          case 'ellipse': if (a[2] === a[3] && !a[4]) arc(a[0], a[1], a[2], a[5], a[6], !!a[7]); else throw new Error('ellipse'); break;
+          case 'closePath': if (path.length) path.push(['Z']); break;
+          case 'rect': path.push(...rectPath(a[0], a[1], a[2], a[3])); cur = T(a[0], a[1]); break;
+          case 'roundRect': { const [x, y, w, h] = a; let r = a[4]; r = Array.isArray(r) ? r[0] : (r && typeof r === 'object' ? r.x : r) || 0; r = Math.min(+r || 0, Math.abs(w) / 2, Math.abs(h) / 2); cur = null; const p = T(x + r, y); path.push(['M', p[0], p[1]]); cur = p; const L = (X, Y) => { const q = T(X, Y); path.push(['L', q[0], q[1]]); cur = q; };
+            L(x + w - r, y); if (r) arc(x + w - r, y + r, r, -Math.PI / 2, 0); L(x + w, y + h - r); if (r) arc(x + w - r, y + h - r, r, 0, Math.PI / 2); L(x + r, y + h); if (r) arc(x + r, y + h - r, r, Math.PI / 2, Math.PI); L(x, y + r); if (r) arc(x + r, y + r, r, Math.PI, 1.5 * Math.PI); path.push(['Z']); break; }
+          case 'fill': if (pinta('F') && emitPath()) { if (a[0] === 'evenodd') pdf.fillEvenOdd(); else pdf.fill(); } break;
+          case 'stroke': if (pinta('S') && emitPath()) pdf.stroke(); break;
+          case 'fillRect': if (fuera(a[1], a[1] + a[3])) break; if (pinta('F')) conRect(rectPath(a[0], a[1], a[2], a[3]), 'F'); break;
+          case 'strokeRect': if (fuera(a[1], a[1] + a[3])) break; if (pinta('S')) conRect(rectPath(a[0], a[1], a[2], a[3]), 'S'); break;
+          case 'clearRect': { const f0 = S.fill, a0 = S.alpha; S.fill = '#ffffff'; S.alpha = 1; pinta('F'); conRect(rectPath(a[0], a[1], a[2], a[3]), 'F'); S.fill = f0; S.alpha = a0; break; }
+          case 'clip': if (emitPath()) { pdf.clip(); pdf.discardPath(); } throw new Error('clip');
+          default: throw new Error('op ' + k);
+        }
+      }
+      if (clip) { pdf.restoreGraphicsState(); }
+    }
+    // revisión previa: si hay algo que no se sabe reproducir, se usa la imagen de siempre
+    const prueba = (R, depth) => { if (R.bad || depth > 4) return false; for (const op of R.ops) { if (op[0] === 'i') { const s = OPS.get(op[1]); if (op[3] && op[3].fino) continue; if (s ? !prueba(s, depth + 1) : !op[3]) return false; } else if (op[0] === 'm' && ['rotate', 'transform', 'clip', 'createLinearGradient', 'createRadialGradient', 'createPattern', 'getImageData', 'putImageData', 'strokeText', 'createConicGradient'].indexOf(op[1]) >= 0) return false; else if (op[0] === 'p' && (op[1] === 'fillStyle' || op[1] === 'strokeStyle') && typeof op[2] !== 'string') return false; } return true; };
+    const J = () => { const P = window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API; if (!P || !P.addImage || P.addImage.__mjVec) return !!(P && P.addImage && P.addImage.__mjVec);
+      const A0 = P.addImage; let dentro = 0;
+      P.addImage = function (data, fmt, x, y, w, h) {
+        try {
+          const cv = typeof data === 'string' ? URLS.get(data) : (data && OPS.has(data) ? data : null);
+          const R = cv && OPS.get(cv);
+          if (!dentro && R && typeof x === 'number' && w > 0 && h > 0 && !window.__mjSinVector && prueba(R, 0)) {
+            const k = w / cv.width, kv = h / cv.height;
+            this.saveGraphicsState(); dentro++;
+            try { play(this, R, [k, 0, 0, kv, x, y], [cv.width, cv.height]); dentro--; this.restoreGraphicsState(); return this; }
+            catch (e) { dentro--; console.warn('[MJ vector] uso imagen:', e && e.message); this.restoreGraphicsState(); }
+          }
+        } catch (e) {}
+        return A0.apply(this, arguments);
+      };
+      P.addImage.__mjVec = true; return true; };
+    // PDF comprimido (el mismo contenido, menos peso); evita la falla de jsPDF que quitaba la compresión al guardar por segunda vez
+    const Z = () => { const j = window.jspdf; if (!j || !j.jsPDF) return false; if (j.jsPDF.__mjZ) return true; const J0 = j.jsPDF;
+      const J2 = function (o) { const a = Array.prototype.slice.call(arguments); if (a.length === 1 && o && typeof o === 'object') a[0] = Object.assign({ compress: true }, o); else if (!a.length) a.push({ compress: true }); const d = new (Function.prototype.bind.apply(J0, [null].concat(a)))(); try { const fl = d.internal.getFilters().slice(); d.internal.getFilters = () => fl.slice(); } catch (e) {} return d; };
+      Object.getOwnPropertyNames(J0).forEach(k => { if (['length', 'name', 'arguments', 'caller', 'prototype'].indexOf(k) < 0) try { J2[k] = J0[k]; } catch (e) {} }); J2.prototype = J0.prototype; J2.__mjZ = true; j.jsPDF = J2; return true; };
+    if (!Z()) { let n = 0; const t = setInterval(() => { if (Z() || ++n > 120) clearInterval(t); }, 500); }
+    if (!J()) { let n = 0; const t = setInterval(() => { if (J() || ++n > 120) clearInterval(t); }, 500); }
   } catch (e) {}
 })();
