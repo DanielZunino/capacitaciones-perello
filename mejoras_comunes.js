@@ -10,6 +10,7 @@
 // 14) Aviso "aquí no se escucha la lectura": solo si de verdad no hay voz (no aparece en Chrome cuando la lectura funciona).
 // 15) Sin recuadros "Idea clave": solo queda un aviso "Importante" en las láminas más críticas (máx. 2 por charla).
 // 16) Diploma: no muestra los minutos en plataforma (solo la duración oficial de la charla).
+// 17) Diploma y certificado: entrega GARANTIZADA al servidor (cola en el teléfono, se confirma con el registro oficial y se reintenta hasta que quede guardado).
 // 8) Inducción: 1 pregunta por cada uno de los 18 ítems de la inducción escrita, con 3 versiones (Constructor, OYM, Plaza y PROSIP).
 // Se carga desde https://danielzunino.github.io/capacitaciones-perello/mejoras_comunes.js en todos los portales.
 (function () {
@@ -617,5 +618,56 @@
     }
     const J = () => { try { const P = window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API; if (P && P.text && !P.text.__mjPlat) { const t0 = P.text; P.text = function (t) { const a = Array.prototype.slice.call(arguments); a[0] = Array.isArray(t) ? t.map(limpiaP) : limpiaP(t); return t0.apply(this, a); }; P.text.__mjPlat = true; } } catch (e) {} };
     J(); setTimeout(J, 1500); window.addEventListener('load', J);
+  } catch (e) {}
+  // ---------- 17) Entrega garantizada de diplomas y certificados
+  //  Antes: el envío era "a ciegas" (no-cors) y mostraba "✔ Diploma registrado" apenas salía, aunque el servidor no lo recibiera
+  //  (se cortó la señal, cerró la página antes de tiempo, etc.). Ahora:
+  //  · El envío se guarda primero en el teléfono (cola) y se confirma consultando el registro oficial (?codigo=...).
+  //  · Recién cuando el registro lo confirma se muestra "✔ Diploma registrado". Si no, se reintenta solo.
+  //  · Si la persona cierra o pierde la señal, se reenvía solo la próxima vez que abra el portal (en ese teléfono).
+  //  · Mientras se guarda, la página avisa que no se cierre.
+  try {
+    if (!window.__mjEntrega && typeof SCRIPT_URL === 'string' && /^https/.test(SCRIPT_URL)) {
+      window.__mjEntrega = true;
+      const F0 = window.fetch.bind(window), DB = 'mj_cola_diplomas', ST = 'cola';
+      const idb = () => new Promise((res, rej) => { try { const r = indexedDB.open(DB, 1); r.onupgradeneeded = () => r.result.createObjectStore(ST, { keyPath: 'codigo' }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } });
+      const tx = async (modo, fn) => { const d = await idb(); return new Promise((res, rej) => { const t = d.transaction(ST, modo), o = t.objectStore(ST), q = fn(o); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }); };
+      const guardar = it => tx('readwrite', o => o.put(it)).catch(() => {});
+      const quitar = c => tx('readwrite', o => o.delete(c)).catch(() => {});
+      const todos = () => tx('readonly', o => o.getAll()).catch(() => []);
+      const espera = ms => new Promise(r => setTimeout(r, ms));
+      let pendientes = 0;
+      window.addEventListener('beforeunload', e => { if (pendientes > 0) { e.preventDefault(); e.returnValue = 'Tu diploma todavía se está guardando. Espera unos segundos.'; return e.returnValue; } });
+      const registrado = async codigo => { try { const ctl = new AbortController(); setTimeout(() => ctl.abort(), 20000); const d = await F0(SCRIPT_URL + '?codigo=' + encodeURIComponent(codigo) + '&_=' + Date.now(), { signal: ctl.signal }).then(r => r.json()); return !!(d && d.ok); } catch (e) { return null; } };
+      const enviar = body => F0(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body }).then(() => true, () => false);
+      const aviso = t => { const el = document.getElementById('sent') || document.getElementById('xSent'); if (el && t) el.textContent = t; };
+      // entrega con confirmación: hasta 4 envíos; después de cada uno se consulta el registro varias veces
+      const entregar = async (it, conAviso) => {
+        pendientes++;
+        try {
+          for (let intento = 0; intento < 4; intento++) {
+            const ya = await registrado(it.codigo); if (ya === true) { await quitar(it.codigo); return true; }
+            if (conAviso) aviso(intento ? 'Reintentando guardar tu diploma… no cierres esta página.' : 'Guardando tu diploma en el sistema… no cierres esta página (puede tardar hasta 1 minuto).');
+            await enviar(it.body);
+            for (let k = 0; k < 6; k++) { const ok = await registrado(it.codigo); if (ok === true) { await quitar(it.codigo); return true; } await espera(5000); }
+          }
+          return false;
+        } finally { pendientes--; }
+      };
+      window.fetch = function (url, opt) {
+        try {
+          if (opt && String(opt.method || '').toUpperCase() === 'POST' && String(url).indexOf(SCRIPT_URL) === 0 && typeof opt.body === 'string' && opt.body.length > 2000) {
+            const o = JSON.parse(opt.body);
+            if (o && o.codigo && (o.diploma || o.pdf)) {
+              const it = { codigo: String(o.codigo), body: opt.body, t: Date.now(), nombre: o.nombre || '', tema: o.tema || o.tema_id || '' };
+              return guardar(it).then(() => entregar(it, true)).then(ok => { if (!ok) { setTimeout(() => aviso('⚠ Aún no queda guardado en el sistema. NO borres nada: se reintenta solo al volver a abrir el portal en este teléfono. Avísale al relator.'), 150); throw new Error('sin confirmar'); } aviso('✔ Diploma registrado en el sistema'); return new Response(null, { status: 200 }); });
+            }
+          }
+        } catch (e) {}
+        return F0.apply(this, arguments);
+      };
+      // al abrir el portal: reenvía lo que haya quedado pendiente en este teléfono
+      setTimeout(async () => { try { const L = await todos(); for (const it of L) { if (Date.now() - (it.t || 0) > 60 * 24 * 3600 * 1000) { await quitar(it.codigo); continue; } await entregar(it, false); } } catch (e) {} }, 4000);
+    }
   } catch (e) {}
 })();
