@@ -13,6 +13,7 @@
 // 17) Diploma y certificado: entrega GARANTIZADA al servidor (cola en el teléfono, se confirma con el registro oficial y se reintenta hasta que quede guardado).
 // 18) Nombres de archivo cortos: "Diploma Juan Campos Induccion IRL 30-10-2026.pdf" (diploma, prueba y certificado DS 44).
 // 19) Diploma, registro y certificados en vector: textos nítidos a cualquier zoom y PDF unas 20 veces más liviano; registro sin "Idea clave".
+// 20) Voz en el teléfono: si la voz elegida no parte se usa la del teléfono; en Chrome/Safari reales el aviso trae "Activar lectura" (ya no dice "abre Chrome").
 // 8) Inducción: 1 pregunta por cada uno de los 18 ítems de la inducción escrita, con 3 versiones (Constructor, OYM, Plaza y PROSIP).
 // Se carga desde https://danielzunino.github.io/capacitaciones-perello/mejoras_comunes.js en todos los portales.
 (function () {
@@ -879,5 +880,115 @@
       Object.getOwnPropertyNames(J0).forEach(k => { if (['length', 'name', 'arguments', 'caller', 'prototype'].indexOf(k) < 0) try { J2[k] = J0[k]; } catch (e) {} }); J2.prototype = J0.prototype; J2.__mjZ = true; j.jsPDF = J2; return true; };
     if (!Z()) { let n = 0; const t = setInterval(() => { if (Z() || ++n > 120) clearInterval(t); }, 500); }
     if (!J()) { let n = 0; const t = setInterval(() => { if (J() || ++n > 120) clearInterval(t); }, 500); }
+  } catch (e) {}
+})();
+
+
+// 20) Lectura en voz alta en el teléfono (Chrome de Android y Safari)
+//     Causas reales de "no lee" en el teléfono y su arreglo:
+//     a) Chrome del teléfono no deja hablar antes del primer toque en la pantalla ("not-allowed"): antes eso apagaba la voz para
+//        siempre; ahora solo espera el primer toque y vuelve a leer.
+//     b) La voz elegida no está instalada en el teléfono y queda muda sin avisar: se prueba de inmediato con otra voz en español
+//        del teléfono y luego con la voz por defecto; la que funciona queda elegida para el resto de la charla.
+//     c) En Chrome/Safari de verdad nunca se apaga la voz por fallas: cada lámina vuelve a intentar.
+//     d) El aviso en Chrome/Safari ya no dice "abre Chrome": trae "Activar lectura" (un toque) y un detalle técnico chico.
+//     En WhatsApp/Instagram (que de verdad no leen) se mantiene el aviso de abrir Chrome.
+(function () {
+  try {
+    if (window.__mjVoz2) return; window.__mjVoz2 = true;
+    const ss = window.speechSynthesis; if (!ss) return;
+    const UA = navigator.userAgent;
+    const INTERNO = /; wv\)|FBAN|FBAV|Instagram|GSA\/|Line\/|WhatsApp|Snapchat|MicroMessenger/i.test(UA);
+    const IOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const REAL = !INTERNO && (IOS ? (/Safari\//.test(UA) || /CriOS/.test(UA)) : /Chrome\/\d|Firefox\/\d|SamsungBrowser|EdgA/.test(UA));
+    const D = window.__mjVozDiag = { err: '', intentos: 0, ok: 0, voz: '', voces: 0, toque: false };
+    const hayToque = () => { try { return !navigator.userActivation || navigator.userActivation.hasBeenActive; } catch (e) { return true; } };
+    const malas = new Set(); let buena;   // buena: undefined = sin decidir; null = voz por defecto; objeto = voz que sí sonó
+    const esVoces = () => { try { return ss.getVoices().filter(v => /^es/i.test(v.lang)); } catch (e) { return []; } };
+    const candidata = () => { const vs = esVoces().filter(v => !malas.has(v.name)); D.voces = esVoces().length;
+      return vs.find(v => v.localService !== false && /CL|419|US|MX|ES/i.test(v.lang)) || vs.find(v => v.localService !== false) || null; };
+    let pendiente = null;   // texto que no se pudo leer por falta de toque
+    const sp = ss.speak.bind(ss);
+    const intentar = (u, paso) => {
+      // paso 0: como viene; 1: otra voz española del teléfono; 2: voz por defecto (sin voz ni idioma forzado)
+      D.intentos++;
+      let partio = false, err = '';
+      const ok = () => { if (partio) return; partio = true; D.ok++; D.err = ''; buena = u.voice || null; D.voz = u.voice ? u.voice.name : '(por defecto)'; try { vozFallas = 0; } catch (e) {} };
+      u.addEventListener('start', ok); u.addEventListener('boundary', ok);
+      u.addEventListener('error', e => { err = (e && e.error) || 'error'; D.err = err;
+        if (err === 'not-allowed') { pendiente = u.text; D.toque = true; setTimeout(() => { try { vozFallas = 0; } catch (er) {} }, 0); } });
+      const siguiente = () => {
+        if (partio || u.__mjFin || err === 'not-allowed' || err === 'interrupted' || err === 'canceled' || paso >= 2) return;
+        if (u.voice) malas.add(u.voice.name);
+        const c = new SpeechSynthesisUtterance(u.text); c.__mjClon = true; c.rate = u.rate; c.pitch = u.pitch; c.volume = u.volume;
+        if (paso === 0) { const v = candidata(); if (v && (!u.voice || v.name !== u.voice.name)) { c.voice = v; c.lang = v.lang; } else c.lang = 'es-ES'; }
+        // paso 1 -> 2: sin voz ni idioma: el teléfono usa su voz por defecto
+        c.onstart = u.onstart; c.onend = u.onend; c.onerror = u.onerror; c.onboundary = u.onboundary;
+        u.onstart = u.onend = u.onerror = u.onboundary = null; u.__mjFin = true;
+        try { ss.cancel(); } catch (e) {}
+        setTimeout(() => { try { intentar(c, paso + 1); sp(c); } catch (e) {} }, 120);
+      };
+      u.addEventListener('end', () => { u.__mjFin = true; });
+      setTimeout(siguiente, paso === 0 ? 1800 : 1500);
+    };
+    ss.speak = function (u) {
+      try {
+        if (u && !u.__mjClon && u.text && u.text.trim().length > 1 && u.volume !== 0) {
+          if (buena !== undefined && (!u.voice || malas.has(u.voice.name))) { u.voice = buena; u.lang = buena ? buena.lang : ''; }
+          else if (u.voice && malas.has(u.voice.name)) { u.voice = buena || null; u.lang = buena ? buena.lang : ''; }
+          if (!hayToque()) { pendiente = u.text; D.toque = true; D.err = 'falta tocar la pantalla'; }
+          try { if (ss.paused) ss.resume(); } catch (e) {}
+          intentar(u, 0);
+        }
+      } catch (e) {}
+      return sp(u);
+    };
+    // c) en navegadores reales la voz no se da por perdida: cada lectura vuelve a intentar
+    if (REAL && typeof vozDisponible === 'function') { try { vozDisponible = function () { return !!window.speechSynthesis; }; } catch (e) {} }
+    // a) al primer toque: se libera la voz y se lee lo que quedó pendiente (una sola vez)
+    const alTocar = () => {
+      try { vozFallas = 0; } catch (e) {}
+      if (!pendiente) return; pendiente = null;
+      setTimeout(() => { try { if (ss.speaking || ss.pending) return; const o = document.getElementById('bOir'); if (o && o.offsetParent) o.click(); } catch (e) {} }, 350);
+    };
+    document.addEventListener('pointerup', alTocar, true);
+    document.addEventListener('click', e => { try { if (e.target && e.target.closest && e.target.closest('#bOir')) { vozFallas = 0; } } catch (er) {} }, true);
+    // d) aviso con botón para activar (solo Chrome/Safari reales)
+    if (!REAL) return;
+    const arreglar = el => {
+      if (!el || el.__mjReal) return; el.__mjReal = true;
+      const det = () => 'Detalle: ' + (D.err || 'sin respuesta') + ' · voces ' + (D.voces || esVoces().length) + ' · intentos ' + D.intentos + (D.voz ? ' · ' + D.voz : '');
+      el.innerHTML = '<button id="vbX" aria-label="Cerrar" style="position:absolute;top:6px;right:8px;background:none;border:0;color:#fff;font-size:22px">×</button>'
+        + '<div style="font-weight:bold;font-size:16px;margin-bottom:6px">🔈 Activa la lectura en voz alta</div>'
+        + '<div id="vbTx" style="font-size:15px;line-height:1.45;color:#fff">Toca el botón amarillo. Revisa que el <b style="color:#FFC20E">volumen</b> del teléfono esté arriba.</div>'
+        + '<button class="btn" id="vbAct" style="margin-top:10px">🔊 Activar lectura</button>'
+        + '<div id="vbDet" style="font-size:11px;color:#9AA0A6;margin-top:6px"></div>';
+      const cerrar = () => { el.style.display = 'none'; document.body.classList.remove('conaviso'); };
+      el.querySelector('#vbX').onclick = cerrar;
+      el.querySelector('#vbDet').textContent = det();
+      el.querySelector('#vbAct').onclick = () => {
+        const b = el.querySelector('#vbAct'); b.textContent = 'Probando la voz…';
+        try { vozFallas = 0; ss.cancel(); if (ss.paused) ss.resume(); } catch (e) {}
+        // prueba en orden: voz por defecto del teléfono, otra voz española, voz elegida antes
+        const vs = [null].concat(esVoces().filter(v => !malas.has(v.name)).slice(0, 3));
+        let k = 0, listo = false;
+        const probar = () => {
+          if (listo) return;
+          if (k >= vs.length) { b.textContent = '🔊 Probar otra vez'; el.querySelector('#vbDet').textContent = det();
+            el.querySelector('#vbTx').innerHTML = 'El teléfono no está entregando la voz. Actívala en <b style="color:#FFC20E">Ajustes → Texto a voz</b> (motor <b style="color:#FFC20E">Google</b>, idioma Español) y vuelve a tocar el botón. Mientras tanto, la charla funciona igual leyendo el texto.'; return; }
+          const v = vs[k++]; const u = new SpeechSynthesisUtterance('Listo, la lectura está activada.'); u.__mjClon = true; u.volume = 1;
+          if (v) { u.voice = v; u.lang = v.lang; }
+          let partio = false;
+          u.onstart = () => { partio = true; listo = true; buena = v; D.voz = v ? v.name : '(por defecto)'; D.err = ''; window.__vozOk = true; try { vozFallas = 0; } catch (e) {} };
+          u.onend = () => { if (!partio) return; cerrar(); pendiente = null; const o = document.getElementById('bOir'); if (o && o.offsetParent) setTimeout(() => o.click(), 300); };
+          u.onerror = e => { D.err = (e && e.error) || 'error'; };
+          try { sp(u); } catch (e) {}
+          setTimeout(() => { if (!partio) { if (v) malas.add(v.name); try { ss.cancel(); } catch (e) {} probar(); } }, 1600);
+        };
+        probar();
+      };
+    };
+    const ver = () => { const el = document.getElementById('vozBanner'); if (el) arreglar(el); };
+    ver(); new MutationObserver(ver).observe(document.body, { childList: true });
   } catch (e) {}
 })();
