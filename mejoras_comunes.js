@@ -14,6 +14,7 @@
 // 18) Nombres de archivo cortos: "Diploma Juan Campos Induccion IRL 30-10-2026.pdf" (diploma, prueba y certificado DS 44).
 // 19) Diploma, registro y certificados en vector: textos nítidos a cualquier zoom y PDF unas 20 veces más liviano; registro sin "Idea clave".
 // 20) Voz en el teléfono: si la voz elegida no parte se usa la del teléfono; en Chrome/Safari reales el aviso trae "Activar lectura" (ya no dice "abre Chrome").
+// 21) Botón atrás del teléfono: no saca del portal (lámina anterior o inicio, sin pedir clave); la clave guardada no se pierde.
 // 8) Inducción: 1 pregunta por cada uno de los 18 ítems de la inducción escrita, con 3 versiones (Constructor, OYM, Plaza y PROSIP).
 // Se carga desde https://danielzunino.github.io/capacitaciones-perello/mejoras_comunes.js en todos los portales.
 (function () {
@@ -975,7 +976,13 @@
         const probar = () => {
           if (listo) return;
           if (k >= vs.length) { b.textContent = '🔊 Probar otra vez'; el.querySelector('#vbDet').textContent = det();
-            el.querySelector('#vbTx').innerHTML = 'El teléfono no está entregando la voz. Actívala en <b style="color:#FFC20E">Ajustes → Texto a voz</b> (motor <b style="color:#FFC20E">Google</b>, idioma Español) y vuelve a tocar el botón. Mientras tanto, la charla funciona igual leyendo el texto.'; return; }
+            const Y = t => '<b style="color:#FFC20E">' + t + '</b>';
+            el.querySelector('#vbTx').innerHTML = (IOS ? 'El teléfono no está entregando la voz. Revisa que no esté en ' + Y('modo silencio') + ' (interruptor del costado) y sube el volumen. Luego toca ' + Y('Probar otra vez') + '.'
+              : 'Al teléfono le falta la voz en español. Se arregla una sola vez:<ol style="margin:6px 0 0 18px;padding:0">'
+              + '<li>Abre ' + Y('Play Store') + ', busca ' + Y('Servicios de voz de Google') + ' y toca Instalar o Actualizar.</li>'
+              + '<li>En ' + Y('Ajustes') + ' busca ' + Y('Texto a voz') + ' y elige el motor ' + Y('Google') + '.</li>'
+              + '<li>Toca el engranaje ⚙️ del motor → ' + Y('Instalar datos de voz') + ' → ' + Y('Español') + ' y descárgalo.</li>'
+              + '<li>Vuelve aquí y toca ' + Y('Probar otra vez') + '.</li></ol>') + '<div style="margin-top:6px">Mientras tanto, la charla funciona igual leyendo el texto.</div>'; return; }
           const v = vs[k++]; const u = new SpeechSynthesisUtterance('Listo, la lectura está activada.'); u.__mjClon = true; u.volume = 1;
           if (v) { u.voice = v; u.lang = v.lang; }
           let partio = false;
@@ -990,5 +997,53 @@
     };
     const ver = () => { const el = document.getElementById('vozBanner'); if (el) arreglar(el); };
     ver(); new MutationObserver(ver).observe(document.body, { childList: true });
+  } catch (e) {}
+})();
+
+// 21) Botón "atrás" del teléfono: ya no saca del portal.
+//     En una lámina vuelve a la lámina anterior; en la primera lámina o en la ficha de datos vuelve al inicio (sin pedir la clave);
+//     en la evaluación, la firma o el diploma no sale (avisa que use los botones) para no perder lo hecho. En el inicio sí sale.
+//     Además la sesión (RUT + clave) nunca se borra al guardar el avance de una charla.
+(function () {
+  try {
+    if (window.__mjAtras) return; window.__mjAtras = true;
+    // sesión: si se guarda la persona sin la clave, se conserva la clave que ya estaba
+    try {
+      const S0 = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (k, v) {
+        try { if (this === window.localStorage && /cap_persona$/.test(String(k))) { const n = JSON.parse(v || '{}') || {}; if (!n.k) { const o = JSON.parse(this.getItem(k) || '{}') || {}; if (o.k && (!n.rut || !o.rut || String(o.rut).replace(/\W/g, '').toUpperCase() === String(n.rut).replace(/\W/g, '').toUpperCase())) { n.k = o.k; v = JSON.stringify(Object.assign({}, o, n)); } } } } catch (e) {}
+        return S0.call(this, k, v);
+      };
+    } catch (e) {}
+    if (!window.history || !history.pushState) return;
+    // el manejo antiguo (volver siempre al inicio) queda reemplazado por este
+    try { const PS = history.pushState.bind(history); history.pushState = function (st0) { if (st0 && st0.dentro) return; return PS.apply(history, arguments); }; } catch (e) {}
+    const pantalla = () => { const s = document.querySelector('.screen.on'); return s ? s.id : ''; };
+    const aviso = t => { try { let el = document.getElementById('mjAtrasAviso'); if (!el) { el = document.createElement('div'); el.id = 'mjAtrasAviso'; el.style.cssText = 'position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#1F2328;color:#fff;padding:12px 18px;border-radius:12px;font-size:15px;z-index:99999;max-width:86vw;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.35)'; document.body.appendChild(el); } el.textContent = t; el.style.display = 'block'; clearTimeout(el.__t); el.__t = setTimeout(() => el.style.display = 'none', 3200); } catch (e) {} };
+    const visible = id => { const e = document.getElementById(id); return e && e.offsetParent !== null && getComputedStyle(e).display !== 'none'; };
+    const cerrarModal = () => {
+      for (const id of ['claveModal', 'vozMenu', 'modal', 'mModal', 'monModal']) { const e = document.getElementById(id); if (e && visible(id)) { const x = e.querySelector('[id$="X"], .x, .cerrar, [aria-label="Cerrar"]'); if (x) x.click(); else e.style.display = 'none'; return true; } }
+      return false; };
+    const guardia = () => { try { history.pushState({ mjGuard: Date.now() }, '', location.href); } catch (e) {} };
+    try { if (!(history.state && history.state.mjGuard)) { history.replaceState({ mjBase: 1 }, '', location.href); guardia(); } } catch (e) {}
+    let saliendo = false, actual = pantalla(), previa = '', tCambio = 0;
+    // pantalla anterior a cualquier cambio hecho por el manejo antiguo (que corre antes y manda al inicio)
+    try { new MutationObserver(() => { const a = pantalla(); if (a !== actual) { previa = actual; actual = a; tCambio = Date.now(); } }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] }); } catch (e) {}
+    const inicio = () => { try { VOZ.stop(); } catch (e) {} try { show('s-home'); if (typeof renderHome === 'function') renderHome(); window.scrollTo(0, 0); } catch (e) { location.replace(location.pathname); } };   // vuelve al inicio sin recargar (la sesión sigue abierta)
+    window.addEventListener('popstate', ev => {
+      try { ev.stopImmediatePropagation(); } catch (e) {}
+      if (saliendo) return;
+      let p = pantalla();
+      if (p === 's-home' && previa && previa !== 's-home' && Date.now() - tCambio < 150) { p = previa; try { show(previa); } catch (e) {} }   // deshace el salto al inicio del manejo antiguo
+      if (!p || p === 's-home') { if (cerrarModal()) { guardia(); return; } saliendo = true; history.back(); return; }   // en el inicio: sale del portal como siempre
+      guardia();
+      if (cerrarModal()) return;
+      try {
+        if (p === 's-learn') { const b = document.getElementById('lPrev'); if (b && typeof st !== 'undefined' && st.li > 0) { b.click(); return; } inicio(); return; }
+        if (p === 's-quiz') { aviso('Estás en la evaluación. Termínala con los botones de la pantalla.'); return; }
+        if (p === 's-result' || p === 's-dip') { aviso('Usa los botones de la pantalla para terminar (firma y diploma).'); return; }
+        inicio();
+      } catch (e) {}
+    }, true);
   } catch (e) {}
 })();
