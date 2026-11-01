@@ -18,6 +18,7 @@
 // 22) Botón "⬅ Volver al portal" en todas las pantallas (vuelve con la sesión abierta, sin pedir clave).
 // 23) Contenido nuevo de las charlas por rubro (más información, preguntas más exigentes); diplomas antiguos se validan con su contenido.
 // 24) Evaluación: el dibujo no delata la respuesta (sin rótulos ni ✓/✗).
+// 25) Dibujos sin "al tiro"; Plaza y Montasip muestran ACHS 1404 en el celular.
 // 8) Inducción: 1 pregunta por cada uno de los 18 ítems de la inducción escrita, con 3 versiones (Constructor, OYM, Plaza y PROSIP).
 // Se carga desde https://danielzunino.github.io/capacitaciones-perello/mejoras_comunes.js en todos los portales.
 (function () {
@@ -1136,5 +1137,17 @@
     const R0 = renderQ;
     renderQ = function () { const v = R0.apply(this, arguments); limpiar(); return v; };
     Object.keys(R0).forEach(k => { try { renderQ[k] = R0[k]; } catch (e) {} });
+  } catch (e) {}
+})();
+
+// 25) Dibujos: sin "al tiro" (queda "de inmediato") en ningún portal; en Plaza y Montasip (ACHS) el celular de "avisa" mostraba 1407 (Mutual) y queda 1404.
+(function () {
+  try {
+    if (typeof S === 'undefined') return;
+    const achs = /capacitaciones-(plaza|montasip)\//.test(location.pathname);
+    const fix = () => Object.keys(S).forEach(k => { const f = S[k]; if (typeof f !== 'function' || f.__mj25) return;
+      const g = function () { let v = f.apply(this, arguments); if (typeof v !== 'string') return v; v = v.replace(/al tiro/g, 'de inmediato'); if (achs) v = v.replace(/>\s*1407\s*</g, '>1404<'); return v; };
+      Object.keys(f).forEach(x => { try { g[x] = f[x]; } catch (e) {} }); g.__mj25 = true; S[k] = g; });
+    fix(); if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fix);
   } catch (e) {}
 })();
