@@ -15,6 +15,7 @@
 // 19) Diploma, registro y certificados en vector: textos nítidos a cualquier zoom y PDF unas 20 veces más liviano; registro sin "Idea clave".
 // 20) Voz en el teléfono: si la voz elegida no parte se usa la del teléfono; en Chrome/Safari reales el aviso trae "Activar lectura" (ya no dice "abre Chrome").
 // 21) Botón atrás del teléfono: no saca del portal (lámina anterior o inicio, sin pedir clave); la clave guardada no se pierde.
+// 22) Botón "⬅ Volver al portal" en todas las pantallas (vuelve con la sesión abierta, sin pedir clave).
 // 8) Inducción: 1 pregunta por cada uno de los 18 ítems de la inducción escrita, con 3 versiones (Constructor, OYM, Plaza y PROSIP).
 // Se carga desde https://danielzunino.github.io/capacitaciones-perello/mejoras_comunes.js en todos los portales.
 (function () {
@@ -1045,5 +1046,14 @@
         inicio();
       } catch (e) {}
     }, true);
+  } catch (e) {}
+})();
+
+// 22) Botón "⬅ Volver al portal" (antes "⌂ Inicio") en todas las pantallas fuera del inicio, también al ver un diploma.
+//     Vuelve al inicio con la sesión abierta: no pide la clave.
+(function () {
+  try {
+    const b = document.getElementById('bInicio'); if (!b || b.__mj22) return; b.__mj22 = true;
+    b.textContent = '⬅ Volver al portal'; b.setAttribute('aria-label', 'Volver al portal');
   } catch (e) {}
 })();
