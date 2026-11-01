@@ -1086,9 +1086,9 @@
         const hay = k => k && typeof S !== 'undefined' && typeof S[k] === 'function';
         let n = 0;
         (D.temas || []).forEach(nt => {
-          const t = TOPICS.find(x => x.id === nt.id); if (!t || t.__mjV3) return;
-          ANT[t.id] = { title: t.title, learn: t.learn, n: (t.quiz || []).length };
-          const viejasL = t.learn || [], viejasQ = t.quiz || [];
+          const t = TOPICS.find(x => x.id === nt.id); if (!t) return;
+          if (!ANT[t.id]) ANT[t.id] = { title: t.title, learn: t.learn, n: (t.quiz || []).length };
+          const viejasL = ANT[t.id].learn || [], viejasQ = (t.__mjQ0 = t.__mjQ0 || t.quiz || []);
           const learn = (nt.learn || []).map((l, i) => { const o = { s: hay(l.s) ? l.s : ((viejasL[i] && viejasL[i].s) || t.thumb || (viejasL[0] && viejasL[0].s)), t: sub(l.t), x: sub(l.x) }; if (l.k) o.k = sub(l.k); return o; });
           const cv = x => x.vf !== undefined ? { q: sub(x.q), vf: x.vf, w: sub(x.w) } : { q: sub(x.q), o: (x.o || []).map(sub), a: 0, w: sub(x.w) };
           const quiz = (nt.quiz || []).filter(q => q && q.v && q.v.length).map((q, i) => Object.assign({ s: hay(q.s) ? q.s : ((viejasQ[i] && viejasQ[i].s) || learn[0].s) }, cv(q.v[0]), { v: q.v.slice(1).map(cv) }));
@@ -1097,6 +1097,9 @@
           t.learn = learn; t.quiz = quiz; t.__mjV3 = true; n++;
         });
         window.__mjContenidoN = n;
+        // segunda pasada cuando cargan los scripts propios del portal (charlas y dibujos que se agregan después)
+        if (!window.__mjCont2) { window.__mjCont2 = true; const otra = () => { try { window.__mjContenidoAplicar(D); const h = document.getElementById('s-home'); if (h && h.classList.contains('on') && typeof renderHome === 'function') renderHome(); } catch (e) {} };
+          if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', otra); else setTimeout(otra, 0); }
         // una charla que quedó a medias con el contenido anterior se retoma desde la primera lámina
         try { const k = typeof SES_KEY !== 'undefined' ? SES_KEY : null; if (k) { const s = JSON.parse(localStorage.getItem(k) || 'null'); if (s && ANT[s.id] && !s.v3) { s.fase = 'learn'; s.li = 0; s.qi = 0; s.ok = 0; s.cola = null; s.v3 = 1; localStorage.setItem(k, JSON.stringify(s)); } } } catch (e) {}
       } catch (e) { console.warn('[MJ contenido]', e && e.message); }
