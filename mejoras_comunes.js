@@ -10,7 +10,7 @@
 // 14) Aviso "aquí no se escucha la lectura": solo si de verdad no hay voz (no aparece en Chrome cuando la lectura funciona).
 // 15) Sin recuadros "Idea clave": solo queda un aviso "Importante" en las láminas más críticas (máx. 2 por charla).
 // 16) Diploma: no muestra los minutos en plataforma (solo la duración oficial de la charla).
-// 17) Diploma y certificado: entrega GARANTIZADA al servidor (cola en el teléfono, se confirma con el registro oficial y se reintenta hasta que quede guardado).
+// 17) Diploma y certificado: entrega GARANTIZADA al servidor (cola en el teléfono, pantalla "Guardando…" sin apagar la pantalla, confirmación con el registro oficial y reintentos hasta que quede guardado).
 // 18) Nombres de archivo cortos: "Diploma Juan Campos Induccion IRL 30-10-2026.pdf" (diploma, prueba y certificado DS 44).
 // 19) Diploma, registro y certificados en vector: textos nítidos a cualquier zoom y PDF unas 20 veces más liviano; registro sin "Idea clave".
 // 20) Voz en el teléfono: si la voz elegida no parte se usa la del teléfono; en Chrome/Safari reales el aviso trae "Activar lectura" (ya no dice "abre Chrome").
@@ -632,13 +632,12 @@
     const J = () => { try { const P = window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API; if (P && P.text && !P.text.__mjPlat) { const t0 = P.text; P.text = function (t) { const a = Array.prototype.slice.call(arguments); a[0] = Array.isArray(t) ? t.map(limpiaP) : limpiaP(t); return t0.apply(this, a); }; P.text.__mjPlat = true; } } catch (e) {} };
     J(); setTimeout(J, 1500); window.addEventListener('load', J);
   } catch (e) {}
-  // ---------- 17) Entrega garantizada de diplomas y certificados
-  //  Antes: el envío era "a ciegas" (no-cors) y mostraba "✔ Diploma registrado" apenas salía, aunque el servidor no lo recibiera
-  //  (se cortó la señal, cerró la página antes de tiempo, etc.). Ahora:
+  // ---------- 17) Entrega garantizada de diplomas y certificados (v2, 04-11-2026)
   //  · El envío se guarda primero en el teléfono (cola) y se confirma consultando el registro oficial (?codigo=...).
-  //  · Recién cuando el registro lo confirma se muestra "✔ Diploma registrado". Si no, se reintenta solo.
-  //  · Si la persona cierra o pierde la señal, se reenvía solo la próxima vez que abra el portal (en ese teléfono).
-  //  · Mientras se guarda, la página avisa que no se cierre.
+  //  · Mientras se guarda, una pantalla completa avisa que no se cierre ni se bloquee el teléfono (y la pantalla no se apaga).
+  //  · Recién cuando el registro lo confirma se muestra "✔ Diploma registrado". Si no, se sigue reintentando mientras la página esté abierta,
+  //    al volver a la página, al recuperar la señal y cada vez que se abra el portal en ese teléfono (con aviso en pantalla).
+  //  · Si no se logra, queda un botón "Reintentar ahora" y el aviso de que NO se pierde.
   try {
     if (!window.__mjEntrega && typeof SCRIPT_URL === 'string' && /^https/.test(SCRIPT_URL)) {
       window.__mjEntrega = true;
@@ -649,38 +648,72 @@
       const quitar = c => tx('readwrite', o => o.delete(c)).catch(() => {});
       const todos = () => tx('readonly', o => o.getAll()).catch(() => []);
       const espera = ms => new Promise(r => setTimeout(r, ms));
-      let pendientes = 0;
+      let pendientes = 0, lock = null;
+      const wake = async on => { try { if (on && !lock && navigator.wakeLock) { lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', () => { lock = null; }); } if (!on && lock) { await lock.release(); lock = null; } } catch (e) {} };
       window.addEventListener('beforeunload', e => { if (pendientes > 0) { e.preventDefault(); e.returnValue = 'Tu diploma todavía se está guardando. Espera unos segundos.'; return e.returnValue; } });
-      const registrado = async codigo => { try { const ctl = new AbortController(); setTimeout(() => ctl.abort(), 20000); const d = await F0(SCRIPT_URL + '?codigo=' + encodeURIComponent(codigo) + '&_=' + Date.now(), { signal: ctl.signal }).then(r => r.json()); return !!(d && d.ok); } catch (e) { return null; } };
+      // pantalla de guardado (no se puede pasar por alto)
+      const css = document.createElement('style');
+      css.textContent = `#mjSave{display:none;position:fixed;inset:0;z-index:99999;background:rgba(10,20,40,.88);align-items:center;justify-content:center;padding:18px;font-family:Arial,Helvetica,sans-serif}
+#mjSave.on{display:flex}#mjSave .b{background:#fff;color:#1F2937;border-radius:20px;max-width:380px;width:100%;padding:24px 20px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+#mjSave .ic{font-size:46px;line-height:1}#mjSave h3{margin:10px 0 6px;font-size:21px}#mjSave p{margin:0 0 8px;font-size:15px;line-height:1.4;color:#374151}
+#mjSave .sp{width:46px;height:46px;border:5px solid #D1D5DB;border-top-color:#1565C0;border-radius:50%;margin:0 auto;animation:mjgir 1s linear infinite}
+@keyframes mjgir{to{transform:rotate(360deg)}}#mjSave button{width:100%;border:none;border-radius:14px;padding:14px;font:inherit;font-size:16px;font-weight:bold;cursor:pointer;margin-top:8px}
+#mjSave .ok{background:#2E7D32;color:#fff}#mjSave .re{background:#1565C0;color:#fff}#mjSave .ce{background:#E5E7EB;color:#111}`;
+      document.head.appendChild(css);
+      const caja = () => { let m = document.getElementById('mjSave'); if (!m) { m = document.createElement('div'); m.id = 'mjSave'; document.body.appendChild(m); } return m; };
+      const panel = (tipo, txt, nombre) => {
+        const m = caja(); m.className = 'on';
+        const que = nombre ? ` de <b>${nombre}</b>` : '';
+        if (tipo === 'guardando') m.innerHTML = `<div class="b"><div class="sp"></div><h3>Guardando tu diploma${que}…</h3><p>${txt || 'No cierres esta página ni bloquees el teléfono.'}</p><p style="font-size:13px;color:#6B7280">Puede tardar hasta 1 minuto si hay poca señal.</p></div>`;
+        if (tipo === 'ok') { m.innerHTML = `<div class="b"><div class="ic">✅</div><h3>Diploma registrado</h3><p>Quedó guardado en el sistema${que}.</p><button class="ok" id="mjOk">Listo</button></div>`; document.getElementById('mjOk').onclick = () => { m.className = ''; }; clearTimeout(window.__mjOkT); window.__mjOkT = setTimeout(() => { if (m.querySelector('#mjOk')) m.className = ''; }, 5000); }
+        if (tipo === 'falla') { m.innerHTML = `<div class="b"><div class="ic">📶</div><h3>Aún no queda guardado</h3><p>No hay buena señal. <b>No se pierde:</b> quedó en este teléfono y se envía solo apenas haya señal o cuando vuelvas a abrir el portal.</p><p>Si puedes, acércate a donde haya mejor señal y toca reintentar.</p><button class="re" id="mjRe">Reintentar ahora</button><button class="ce" id="mjCe">Cerrar</button></div>`;
+          document.getElementById('mjRe').onclick = () => procesar(true); document.getElementById('mjCe').onclick = () => { m.className = ''; }; }
+      };
+      const registrado = async codigo => { try { const ctl = new AbortController(); setTimeout(() => ctl.abort(), 20000); const d = await F0(SCRIPT_URL + '?codigo=' + encodeURIComponent(codigo) + '&_=' + Date.now(), { signal: ctl.signal, cache: 'no-store' }).then(r => r.json()); return !!(d && d.ok); } catch (e) { return null; } };
       const enviar = body => F0(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body }).then(() => true, () => false);
       const aviso = t => { const el = document.getElementById('sent') || document.getElementById('xSent'); if (el && t) el.textContent = t; };
-      // entrega con confirmación: hasta 4 envíos; después de cada uno se consulta el registro varias veces
+      const enCurso = new Set();
+      // entrega con confirmación: hasta 4 envíos por ronda; después de cada uno se consulta el registro varias veces
       const entregar = async (it, conAviso) => {
-        pendientes++;
+        if (enCurso.has(it.codigo)) return null; enCurso.add(it.codigo); pendientes++; wake(true);
         try {
           for (let intento = 0; intento < 4; intento++) {
             const ya = await registrado(it.codigo); if (ya === true) { await quitar(it.codigo); return true; }
-            if (conAviso) aviso(intento ? 'Reintentando guardar tu diploma… no cierres esta página.' : 'Guardando tu diploma en el sistema… no cierres esta página (puede tardar hasta 1 minuto).');
+            if (conAviso) { aviso(intento ? 'Reintentando guardar tu diploma… no cierres esta página.' : 'Guardando tu diploma en el sistema… no cierres esta página.'); panel('guardando', intento ? 'Reintentando (' + (intento + 1) + ' de 4)… no cierres esta página.' : '', it.nombre); }
             await enviar(it.body);
             for (let k = 0; k < 6; k++) { const ok = await registrado(it.codigo); if (ok === true) { await quitar(it.codigo); return true; } await espera(5000); }
           }
           return false;
-        } finally { pendientes--; }
+        } finally { pendientes--; enCurso.delete(it.codigo); if (!pendientes) wake(false); }
       };
+      // procesa toda la cola del teléfono (al abrir, al volver a la página, al recuperar señal o con el botón)
+      let ronda = null;
+      const procesar = conPanel => { if (ronda) return ronda; ronda = (async () => { try {
+        const L = (await todos()).filter(it => { if (Date.now() - (it.t || 0) > 60 * 24 * 3600 * 1000) { quitar(it.codigo); return false; } return true; });
+        if (!L.length) return; let malos = 0;
+        for (const it of L) { const r = await entregar(it, conPanel); if (r === false) malos++; else if (r === true && conPanel) panel('ok', '', it.nombre); }
+        if (malos && conPanel) panel('falla'); } catch (e) {} finally { ronda = null; } })(); return ronda; };
       window.fetch = function (url, opt) {
         try {
           if (opt && String(opt.method || '').toUpperCase() === 'POST' && String(url).indexOf(SCRIPT_URL) === 0 && typeof opt.body === 'string' && opt.body.length > 2000) {
             const o = JSON.parse(opt.body);
             if (o && o.codigo && (o.diploma || o.pdf)) {
               const it = { codigo: String(o.codigo), body: opt.body, t: Date.now(), nombre: o.nombre || '', tema: o.tema || o.tema_id || '' };
-              return guardar(it).then(() => entregar(it, true)).then(ok => { if (!ok) { setTimeout(() => aviso('⚠ Aún no queda guardado en el sistema. NO borres nada: se reintenta solo al volver a abrir el portal en este teléfono. Avísale al relator.'), 150); throw new Error('sin confirmar'); } aviso('✔ Diploma registrado en el sistema'); return new Response(null, { status: 200 }); });
+              return guardar(it).then(() => entregar(it, true)).then(ok => {
+                if (ok !== true) { setTimeout(() => { aviso('⚠ Aún no queda guardado en el sistema. No se pierde: se reintenta solo. Avísale al relator.'); panel('falla'); }, 150);
+                  // sigue intentando mientras la página esté abierta
+                  setTimeout(function otra() { procesar(false).then(async () => { const q = await todos(); if (q.some(x => x.codigo === it.codigo)) setTimeout(otra, 30000); else { aviso('✔ Diploma registrado en el sistema'); panel('ok', '', it.nombre); } }); }, 30000);
+                  throw new Error('sin confirmar'); }
+                aviso('✔ Diploma registrado en el sistema'); panel('ok', '', it.nombre); return new Response(null, { status: 200 }); });
             }
           }
         } catch (e) {}
         return F0.apply(this, arguments);
       };
-      // al abrir el portal: reenvía lo que haya quedado pendiente en este teléfono
-      setTimeout(async () => { try { const L = await todos(); for (const it of L) { if (Date.now() - (it.t || 0) > 60 * 24 * 3600 * 1000) { await quitar(it.codigo); continue; } await entregar(it, false); } } catch (e) {} }, 4000);
+      // al abrir el portal, al volver a la página y al recuperar la señal: reenvía lo pendiente de este teléfono (avisando en pantalla)
+      setTimeout(() => procesar(true), 4000);
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { procesar(true); if (pendientes) wake(true); } });
+      window.addEventListener('online', () => procesar(true));
     }
   } catch (e) {}
   // ---------- 18) Nombres de archivo cortos (diploma, prueba respondida y certificado DS 44)
