@@ -919,7 +919,7 @@
       P.addImage.__mjVec = true; return true; };
     // PDF comprimido (el mismo contenido, menos peso); evita la falla de jsPDF que quitaba la compresión al guardar por segunda vez
     const Z = () => { const j = window.jspdf; if (!j || !j.jsPDF) return false; if (j.jsPDF.__mjZ) return true; const J0 = j.jsPDF;
-      const J2 = function (o) { const a = Array.prototype.slice.call(arguments); if (a.length === 1 && o && typeof o === 'object') a[0] = Object.assign({ compress: true }, o); else if (!a.length) a.push({ compress: true }); const d = new (Function.prototype.bind.apply(J0, [null].concat(a)))(); try { const fl = d.internal.getFilters().slice(); d.internal.getFilters = () => fl.slice(); } catch (e) {} return d; };
+      const J2 = function (o) { const a = Array.prototype.slice.call(arguments); if (a.length === 1 && o && typeof o === 'object') a[0] = Object.assign({ compress: true }, o); else if (!a.length) a.push({ compress: true }); const d = new (Function.prototype.bind.apply(J0, [null].concat(a)))(); try { const F = d.internal.getFilters(), fl = F.slice(), O = d.output; d.output = function () { try { F.length = 0; fl.forEach(x => F.push(x)); } catch (e) {} return O.apply(this, arguments); }; } catch (e) {} return d; };
       Object.getOwnPropertyNames(J0).forEach(k => { if (['length', 'name', 'arguments', 'caller', 'prototype'].indexOf(k) < 0) try { J2[k] = J0[k]; } catch (e) {} }); J2.prototype = J0.prototype; J2.__mjZ = true; j.jsPDF = J2; return true; };
     if (!Z()) { let n = 0; const t = setInterval(() => { if (Z() || ++n > 120) clearInterval(t); }, 500); }
     if (!J()) { let n = 0; const t = setInterval(() => { if (J() || ++n > 120) clearInterval(t); }, 500); }
