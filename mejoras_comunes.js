@@ -1260,6 +1260,9 @@
           const fill = (t.getAttribute('fill') || '').toLowerCase(), bold = /bold|[6-9]00/.test(t.getAttribute('font-weight') || '');
           if (!bold || parseFloat(t.getAttribute('font-size') || '10') < 8) return;
           let pill = null; for (let r = t.previousElementSibling, i = 0; i < 3 && r; i++, r = r.previousElementSibling) { if (r.tagName === 'rect' && r.getAttribute('rx')) { pill = r; break; } if (r.tagName === 'text') break; }
+          // casilla grande (ej. escala del índice UV): es parte del dibujo y se deja; solo se ocultan los números del rango
+          let base = pill; if (!base) for (let r = t.previousElementSibling, i = 0; i < 3 && r; i++, r = r.previousElementSibling) { if (r.tagName === 'rect') { base = r; break; } if (r.tagName !== 'text') break; }
+          if (base && base.getAttribute('rx') && parseFloat(base.getAttribute('height') || '0') > 34) { if (/^\s*\d+\s*([–-]\s*\d+|\+)\s*$/.test(t.textContent || '')) t.style.display = 'none'; return; }
           const blanco = fill === '#fff' || fill === '#ffffff' || fill === 'white';
           if (!blanco && !pill) return;   // texto propio del dibujo (carteles, envases): se deja
           t.style.display = 'none'; if (pill) pill.style.display = 'none';
