@@ -1,3 +1,101 @@
+// 0) DOCUMENTOS SELLADOS (como el comprobante de entrega de EPP) · 11-11-2026
+//    Diploma, prueba respondida, hoja de registro y certificado DS 44 quedan APLANADOS y SELLADOS:
+//    cada página es una sola imagen a 300 ppp (firmas del trabajador y del relator, sello y textos fundidos en ella:
+//    nada se puede seleccionar, mover ni editar) y el PDF va protegido (solo imprimir; no se puede modificar ni copiar).
+//    Aplica a lo que se guarda en Drive y a lo que descarga el trabajador. Si algo fallara, el diploma igual se guarda (nunca se pierde).
+(function () {
+  try {
+    if (window.__mjSello) return; window.__mjSello = true;
+    const DPI = 300, Q = 0.9, PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+    const OWNER = 'Integra-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    let carga = null;
+    const pdfjs = () => carga || (carga = new Promise((res, rej) => {
+      if (window.pdfjsLib) return res(window.pdfjsLib);
+      const s = document.createElement('script'); s.src = PDFJS + 'pdf.min.js';
+      s.onload = () => { try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js'; res(window.pdfjsLib); } catch (e) { rej(e); } };
+      s.onerror = () => { carga = null; rej(new Error('pdf.js')); }; document.head.appendChild(s);
+    }));
+    const b64aU8 = b => { const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; };
+    const u8aB64 = u => { let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+    const yaSellado = u => { try { const t = new TextDecoder('latin1').decode(u.subarray(Math.max(0, u.length - 3000))); return /\/Encrypt\s/.test(t); } catch (e) { return false; } };
+    const huella = async u => { try { const h = await crypto.subtle.digest('SHA-256', u); return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join(''); } catch (e) { return u.length + ':' + u[100] + u[u.length >> 1] + u[u.length - 50]; } };
+    const CACHE = new Map();   // huella del original -> Promise<Uint8Array sellado>
+    async function sellar(u8) {
+      if (!u8 || u8.length < 100 || yaSellado(u8)) return u8;
+      const k = await huella(u8); if (CACHE.has(k)) return CACHE.get(k);
+      const p = (async () => {
+        const lib = await pdfjs(), J = window.jspdf && window.jspdf.jsPDF; if (!J) throw new Error('jsPDF');
+        const doc = await lib.getDocument({ data: u8.slice(), isEvalSupported: false }).promise;
+        let info = {}; try { info = (await doc.getMetadata()).info || {}; } catch (e) {}
+        const MM = 25.4 / 72; let out = null;
+        for (let i = 1; i <= doc.numPages; i++) {
+          const pg = await doc.getPage(i), v1 = pg.getViewport({ scale: 1 }), v = pg.getViewport({ scale: DPI / 72 });
+          const c = document.createElement('canvas'); c.width = Math.round(v.width); c.height = Math.round(v.height);
+          const x = c.getContext('2d'); x.fillStyle = '#ffffff'; x.fillRect(0, 0, c.width, c.height);
+          await pg.render({ canvasContext: x, viewport: v, annotationMode: 0 }).promise;
+          const w = v1.width * MM, h = v1.height * MM, ori = w > h ? 'landscape' : 'portrait';
+          if (!out) out = new J({ orientation: ori, unit: 'mm', format: [w, h], compress: true, encryption: { userPassword: '', ownerPassword: OWNER, userPermissions: ['print'] } });
+          else out.addPage([w, h], ori);
+          out.addImage(c.toDataURL('image/jpeg', Q), 'JPEG', 0, 0, w, h, undefined, 'NONE');
+          // enlaces (código QR de validación, etc.) siguen funcionando
+          try { (await pg.getAnnotations()).forEach(a => { if (a.subtype === 'Link' && a.url && a.rect) { const r = a.rect; out.link(r[0] * MM, (v1.height - r[3]) * MM, (r[2] - r[0]) * MM, (r[3] - r[1]) * MM, { url: a.url }); } }); } catch (e) {}
+          c.width = c.height = 0; try { pg.cleanup(); } catch (e) {}
+        }
+        try { doc.destroy(); } catch (e) {}
+        out.setProperties({ title: info.Title || 'Documento sellado', subject: 'Documento aplanado y sellado (SELLADO-INTEGRA). Cualquier modificación invalida su huella SHA-256.', creator: 'Integra Prevención · Portal de Capacitaciones', keywords: 'SELLADO-INTEGRA' });
+        return new Uint8Array(out.output('arraybuffer'));
+      })();
+      CACHE.set(k, p); if (CACHE.size > 12) CACHE.delete(CACHE.keys().next().value);
+      p.catch(() => CACHE.delete(k));
+      return p;
+    }
+    window.MJ_SELLAR = sellar;
+    const esPdf64 = s => typeof s === 'string' && s.length > 400 && (s.indexOf('JVBER') === 0 || s.indexOf('data:application/pdf') === 0);
+    const sellar64 = async s => { const pre = s.indexOf('data:') === 0 ? s.slice(0, s.indexOf(',') + 1) : ''; const u = await sellar(b64aU8(pre ? s.slice(pre.length) : s)); return pre + u8aB64(u); };
+
+    // a) Todo lo que se envía al sistema (Drive): cada campo que sea un PDF se sella antes de salir
+    const F = window.fetch;
+    window.fetch = function (url, opt) {
+      try {
+        if (opt && String(opt.method || '').toUpperCase() === 'POST' && typeof opt.body === 'string' && opt.body.length > 2000 && opt.body.indexOf('JVBER') >= 0 && opt.body.charAt(0) === '{') {
+          const o = JSON.parse(opt.body), ks = Object.keys(o).filter(k => esPdf64(o[k]));
+          if (ks.length) { const self = this, args = arguments;
+            return Promise.all(ks.map(k => sellar64(o[k]).then(v => { o[k] = v; }, e => { console.warn('[sello] se envía sin sellar:', e && e.message); })))
+              .then(() => F.call(self, url, Object.assign({}, opt, { body: JSON.stringify(o) }))); }
+        }
+      } catch (e) {}
+      return F.apply(this, arguments);
+    };
+    // b) Lo que descarga o comparte el trabajador también va sellado
+    const clk = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function () {
+      const a = this;
+      try {
+        if (!a.__mjSel && a.download && /\.pdf$/i.test(a.download) && /^(blob:|data:application\/pdf)/.test(a.href)) {
+          const nom = a.download;
+          fetch(a.href).then(r => r.arrayBuffer()).then(b => sellar(new Uint8Array(b))).then(u => {
+            const url = URL.createObjectURL(new Blob([u], { type: 'application/pdf' }));
+            const b2 = document.createElement('a'); b2.__mjSel = true; b2.href = url; b2.download = nom; document.body.appendChild(b2); clk.call(b2); b2.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+          }).catch(() => { a.__mjSel = true; clk.call(a); });
+          return;
+        }
+      } catch (e) {}
+      return clk.apply(this, arguments);
+    };
+    if (navigator.share) {
+      const sh = navigator.share.bind(navigator);
+      navigator.share = async function (d) {
+        try { if (d && d.files && d.files.some(f => /\.pdf$/i.test(f.name))) {
+          const fs = await Promise.all(d.files.map(async f => /\.pdf$/i.test(f.name) ? new window.File([await sellar(new Uint8Array(await f.arrayBuffer()))], f.name, { type: 'application/pdf' }) : f));
+          d = Object.assign({}, d, { files: fs }); } } catch (e) {}
+        return sh(d);
+      };
+    }
+    // carga anticipada (sin gastar datos de más): apenas se entra a una charla o al curso DS 44
+    document.addEventListener('click', function pre(ev) { try { if (ev.target && ev.target.closest && ev.target.closest('button')) { setTimeout(() => pdfjs().catch(() => {}), 1500); document.removeEventListener('click', pre, true); } } catch (e) {} }, true);
+  } catch (e) {}
+})();
+
 // ===== Mejoras comunes para todos los portales de capacitación (Integra Prevención) · 28-10-2026 =====
 // Se agrega al final del script de cada portal. Configurar antes: window.MARCA = { nombre, c1, c2, fuente }.
 // 1) Voz: siglas leídas a la chilena (EPP = "e pe pe", ACHS = "achs", 1404 = "catorce cero cuatro"...).
