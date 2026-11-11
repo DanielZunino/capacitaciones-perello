@@ -32,7 +32,7 @@
           const pg = await doc.getPage(i), v1 = pg.getViewport({ scale: 1 }), v = pg.getViewport({ scale: DPI / 72 });
           const c = document.createElement('canvas'); c.width = Math.round(v.width); c.height = Math.round(v.height);
           const x = c.getContext('2d'); x.fillStyle = '#ffffff'; x.fillRect(0, 0, c.width, c.height);
-          await pg.render({ canvasContext: x, viewport: v, annotationMode: 0 }).promise;
+          await pg.render({ canvasContext: x, viewport: v, annotationMode: 0, intent: 'print' }).promise;   // 'print': sigue aunque el teléfono bloquee la pantalla o cambie de app
           const w = v1.width * MM, h = v1.height * MM, ori = w > h ? 'landscape' : 'portrait';
           if (!out) out = new J({ orientation: ori, unit: 'mm', format: [w, h], compress: true, encryption: { userPassword: '', ownerPassword: OWNER, userPermissions: ['print'] } });
           else out.addPage([w, h], ori);
@@ -45,9 +45,10 @@
         out.setProperties({ title: info.Title || 'Documento sellado', subject: 'Documento aplanado y sellado (SELLADO-INTEGRA). Cualquier modificación invalida su huella SHA-256.', creator: 'Integra Prevención · Portal de Capacitaciones', keywords: 'SELLADO-INTEGRA' });
         return new Uint8Array(out.output('arraybuffer'));
       })();
-      CACHE.set(k, p); if (CACHE.size > 12) CACHE.delete(CACHE.keys().next().value);
-      p.catch(() => CACHE.delete(k));
-      return p;
+      const tope = new Promise((_, rej) => setTimeout(() => rej(new Error('tiempo')), 60000));   // nunca deja un diploma esperando
+      const pp = Promise.race([p, tope]); CACHE.set(k, pp); if (CACHE.size > 12) CACHE.delete(CACHE.keys().next().value);
+      pp.catch(() => CACHE.delete(k));
+      return pp;
     }
     window.MJ_SELLAR = sellar;
     const esPdf64 = s => typeof s === 'string' && s.length > 400 && (s.indexOf('JVBER') === 0 || s.indexOf('data:application/pdf') === 0);
