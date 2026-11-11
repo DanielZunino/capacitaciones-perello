@@ -1184,3 +1184,78 @@
     fix(); if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fix);
   } catch (e) {}
 })();
+
+// ---------- 99) Curso DS 44: los 6 módulos se pueden completar siempre (arreglo 11-11-2026)
+//  Problema: los módulos del DS 44 se arman con láminas y preguntas de las charlas del portal (autocuidado, peligros,
+//  enfermedades, tmert, epp, maquinas, emergencias, accidente, senaletica, incendios). Cuando un portal no tiene alguna
+//  de esas charlas, o la charla tiene menos láminas/preguntas, el módulo quedaba con láminas vacías y se caía a mitad.
+//  Arreglo: si el módulo trae algo vacío, se rearma tolerante (se omite lo que no existe) y, si el portal no tiene
+//  la charla de enfermedades profesionales, se usa una versión general. Los portales que ya funcionaban no cambian.
+(function () {
+  const BIB = {
+    enfermedades: {
+      learn: [
+        { s: 'bodyMap', t: 'Accidente y enfermedad profesional', x: 'Un <b>accidente</b> ocurre de golpe. Una <b>enfermedad profesional</b> (Ley 16.744, art. 7) es la causada de manera directa por el trabajo que realizas y que produce incapacidad o muerte. Aparece de a poco, a veces después de años, y casi siempre <b>sin dolor al comienzo</b>.', k: 'Lo que no duele hoy puede enfermarte mañana.' },
+        { s: 'bodyMap', t: 'Agentes que enferman', x: '<ul><li><b>Ruido</b>: pérdida de audición permanente.</li><li><b>Químicos</b> (limpieza, solventes, humos): dermatitis, irritación y daño respiratorio.</li><li><b>Posturas, fuerza y repetición</b>: lesiones de espalda, hombros y muñecas.</li><li><b>Calor y radiación UV</b>: golpe de calor y daño en piel y ojos.</li><li><b>Factores psicosociales</b>: estrés y desgaste.</li></ul>', k: 'Conocer el agente es el primer paso para controlarlo.' },
+        { s: 'duties', t: 'Cómo te proteges', x: 'Primero se controla en la fuente (máquinas, extracción, ayudas mecánicas); después se ordena el trabajo (pausas, rotación) y al final se usa el <b>EPP</b> indicado, <b>todo el tiempo</b> que dure la exposición. Sigue la <b>Hoja de Datos de Seguridad (HDS)</b> de cada producto químico.', k: 'La protección sirve solo si se usa siempre.' },
+        { s: 'report', t: 'Vigilancia de la salud', x: 'Cuando una evaluación confirma exposición a un agente sobre el nivel de acción, el organismo administrador incorpora a los trabajadores expuestos a un <b>programa de vigilancia de la salud</b> con exámenes periódicos. <b>Asistir es parte de tu protección.</b>', k: 'Detectar temprano permite actuar antes de que el daño avance.' },
+        { s: 'helpMate', t: 'Señales de alerta', x: '<ul><li><b>Zumbido</b> en los oídos o hablar cada vez más fuerte.</li><li><b>Picazón</b>, ronchas o grietas en las manos.</li><li><b>Tos</b> o nariz tapada que no se pasa.</li><li><b>Hormigueo</b> o dolor en manos, hombros o espalda.</li></ul>Avísalo a tu jefatura o al prevencionista.', k: 'Avisar una molestia a tiempo no es quejarse: es prevenir.' },
+        { s: 'law', t: 'Si crees que es por el trabajo', x: 'Avisa a tu jefatura. La empresa debe hacer la <b>DIEP</b> (Denuncia Individual de Enfermedad Profesional) y derivarte a tu organismo administrador (mutualidad o ISL), que evalúa si es de origen laboral. Si la empresa no la hace, puedes presentarla tú. Si se califica como profesional, la Ley 16.744 cubre atención gratuita y prestaciones.', k: 'La DIEP inicia la evaluación de tu enfermedad.' },
+        { s: 'duties', t: 'Autocuidado: la protección no tiene pausa', x: 'Acciones inseguras típicas: sacarse el protector "solo un rato", tocar productos químicos sin guantes, levantar peso doblando la espalda, <b>faltar a los exámenes</b>. El daño se suma día a día. La decisión segura: <b>protección todo el turno</b>, ir a tus controles y avisar si tu EPP está malo.', k: 'Tu salud de mañana se cuida con lo que haces hoy.' }
+      ],
+      quiz: [
+        { q: 'Una enfermedad profesional es:', s: 'bodyMap', o: ['La causada de manera directa por el trabajo que realizas', 'Cualquier resfrío', 'Solo un golpe en el trabajo'], a: 0, w: 'Así la define la Ley 16.744, art. 7.' },
+        { q: 'La pérdida de audición causada por ruido:', s: 'bodyMap', o: ['Es permanente', 'Se recupera con descanso', 'Se cura con remedios'], a: 0, w: 'No tiene cura: solo se previene.' },
+        { q: 'Si mi puesto exige protector o mascarilla, puedo sacármelo un rato si estoy cansado.', s: 'duties', vf: false, w: 'Falso. La protección sirve solo si se usa todo el tiempo de la exposición.' },
+        { q: 'Me citan a exámenes del programa de vigilancia de la salud. ¿Qué hago?', s: 'report', o: ['Asisto: es parte de mi protección', 'No voy, me siento bien', 'Mando a otro'], a: 0, w: 'Los exámenes detectan daños antes de que avancen.' },
+        { q: 'Hace semanas tengo hormigueo en las manos al final del turno. ¿Qué hago?', s: 'helpMate', o: ['Lo aviso a mi jefatura o al prevencionista', 'Lo aguanto', 'Espero a que se pase solo'], a: 0, w: 'Es una señal de alerta: avisar permite evaluarla a tiempo.' },
+        { q: 'La sigla DIEP significa:', s: 'law', o: ['Denuncia Individual de Enfermedad Profesional', 'Documento Interno de Equipos', 'Día de Inspección'], a: 0, w: 'Con la DIEP se inicia la evaluación de la enfermedad.' }
+      ]
+    }
+  };
+  const topics = () => { try { return Array.isArray(TOPICS) ? TOPICS : []; } catch (e) { return []; } };
+  const T = id => topics().find(t => t && t.id === id) || BIB[id] || { learn: [], quiz: [] };
+  const h = {
+    tL: id => T(id),
+    pickL: (id, idx) => idx.map(i => (T(id).learn || [])[i]).filter(Boolean),
+    pickQ: (id, idx) => idx.map(i => (T(id).quiz || [])[i]).filter(Boolean),
+    allQ: id => (T(id).quiz || []).filter(Boolean)
+  };
+  const mk = src => { try { const f = new Function('tL', 'pickL', 'pickQ', 'allQ', '"use strict"; return (' + src + ');')(h.tL, h.pickL, h.pickQ, h.allQ); return typeof f === 'function' ? f : null; } catch (e) { return null; } };
+  const dib = k => { try { return !!k && typeof S[k] === 'function'; } catch (e) { return false; } };
+  const cache = new WeakMap();   // mismas tarjetas = mismos objetos (para retomar donde quedó)
+  const fixL = (c, m) => { if (dib(c.s)) return c; if (!cache.has(c)) cache.set(c, Object.assign({}, c, { s: dib(m.thumb) ? m.thumb : 'law' })); return cache.get(c); };
+  const fixQ = q => { if (q.pick && !q.pick.every(dib)) return null; if (!q.s || dib(q.s)) return q; if (!cache.has(q)) { const c = Object.assign({}, q); delete c.s; cache.set(q, c); } return cache.get(q); };
+  const roto = a => !Array.isArray(a) || !a.length || a.some(x => !x);
+  function arreglar() {
+    try {
+      if (typeof DS44 === 'undefined' || !DS44 || !Array.isArray(DS44.modulos)) return;
+      const sq = (() => { try { return String(ds44Quiz); } catch (e) { return ''; } })();
+      const mq = sq.match(/m\.id\s*===\s*'(\w+)'\s*\?\s*m\.quiz\.concat\((.*)\)\s*:\s*m\.quiz/);
+      DS44.modulos.forEach(m => {
+        if (!m || m.__fix44) return;
+        const oL = m.learnF, oQ = m.quizF, baseL = Array.isArray(m.learn) ? m.learn : null, baseQ = Array.isArray(m.quiz) ? m.quiz : null, oX = m.learnExtra;
+        const tL2 = oL ? mk(String(oL)) : null, tQ2 = oQ ? mk(String(oQ)) : null, tX2 = oX ? mk(String(oX)) : null;
+        const xQ = mq && mq[1] === m.id ? mk('() => ' + mq[2]) : null, oXQ = mq && mq[1] === m.id ? (() => { try { return m.quiz.concat(eval(mq[2])); } catch (e) { return null; } }) : null;
+        m.learnF = function () {
+          let L = null; try { L = oL ? oL() : (baseL || []).concat(oX ? oX() : []); } catch (e) { L = null; }
+          if (roto(L)) { try { L = tL2 ? tL2() : (baseL || []).concat(tX2 ? tX2() : []); } catch (e) { L = (baseL || []).slice(); } }
+          L = (L || []).filter(Boolean);
+          if (!L.length) L = h.pickL('autocuidado', [0, 1, 2, 3]);
+          return L.map(c => fixL(c, m));
+        };
+        m.quizF = function () {
+          let Q = null; try { Q = oQ ? oQ() : (oXQ ? oXQ() : (baseQ || []).slice()); } catch (e) { Q = null; }
+          if (roto(Q)) { try { Q = tQ2 ? tQ2() : (baseQ || []).concat(xQ ? xQ() : []); } catch (e) { Q = (baseQ || []).slice(); } }
+          Q = (Q || []).filter(Boolean).map(fixQ).filter(Boolean);
+          if (!Q.length) Q = h.allQ('autocuidado').slice(0, 5).map(fixQ).filter(Boolean);
+          return Q;
+        };
+        m.__fix44 = true;
+      });
+    } catch (e) { try { console.log('DS44 arreglo: ' + e); } catch (x) {} }
+  }
+  arreglar();
+  try { document.addEventListener('DOMContentLoaded', arreglar); window.addEventListener('load', arreglar); document.addEventListener('click', arreglar, true); } catch (e) {}
+  let n = 0; const iv = setInterval(() => { arreglar(); if (++n > 20) clearInterval(iv); }, 1000);
+})();
