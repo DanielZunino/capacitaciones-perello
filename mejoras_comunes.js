@@ -1419,16 +1419,16 @@
     const pend = tipo === 'pendiente';
     m.innerHTML = `<div class="nmbox"><div class="nmic">${pend ? '⏳' : '📝'}</div>
       <h3>${pend ? 'Su inscripción está en revisión' : 'Usted aún no está inscrito en el portal'}</h3>
-      ${pend ? `<p>Ya recibimos su inscripción${rut ? ' (RUT ' + rut + ')' : ''}, pero <b>el prevencionista aún no la acepta</b>.</p><p>Apenas la acepte podrá entrar con su RUT y su clave. Si ya pasó más de un día, avise a su jefatura.</p>`
+      ${pend ? `<p>Ya recibimos su inscripción${rut ? ' (RUT ' + rut + ')' : ''}, pero <b>el área de Prevención o RR.HH. aún no la acepta</b>.</p><p>Apenas sea aceptada podrá entrar con su RUT y su clave. Si ya pasó más de un día, avise a su jefatura.</p>`
         : `<div class="nmRut">${rut ? 'El RUT <b>' + rut + '</b> no aparece' : 'Su RUT no aparece'} en la nómina de ${EMPN}.</div>
         <p style="font-size:16px"><b>Primero debe inscribirse.</b> Es fácil: el teléfono le va leyendo cada pregunta.</p>
         ${botonInsc('INSCRIBIRME AHORA')}
-        <ol class="nmPasos"><li>Toque el botón <b>amarillo</b> y responda las preguntas.</li><li>Espere que el prevencionista acepte su inscripción.</li><li>Vuelva aquí y entre con su RUT y su clave.</li></ol>`}
+        <ol class="nmPasos"><li>Toque el botón <b>amarillo</b> y responda las preguntas.</li><li>Espere que el área de Prevención o RR.HH. verifique y acepte su inscripción.</li><li>Vuelva aquí y entre con su RUT y su clave.</li></ol>`}
       <button class="${pend ? 'btn' : 'lnk'}" id="nmX">${pend ? 'Entendido' : 'Me equivoqué al escribir el RUT'}</button></div>`;
     m.className = 'on';
     $('nmX').onclick = () => { m.className = ''; try { GUIA.hide(); } catch (e) {} const r = $('rutHome'); if (r && !pend) { r.focus(); r.select && r.select(); } };
     try { SFX.play('bad'); } catch (e) {}
-    hablar(pend ? 'Su inscripción está en revisión. Apenas el prevencionista la acepte, podrá entrar.'
+    hablar(pend ? 'Su inscripción está en revisión. Apenas el área de Prevención o Recursos Humanos la acepte, podrá entrar.'
       : 'Usted aún no está inscrito. Primero debe inscribirse. Toque el botón amarillo y responda las preguntas.');
     if (!pend) setTimeout(() => { try { const g = m.querySelector('.insBtn'); if (g && m.className === 'on') GUIA.at(g, 'TOQUE AQUÍ'); } catch (e) {} }, 400);
   }
@@ -1448,14 +1448,14 @@
     if ($('rutHome') && !r.querySelector('.insBox')) {
       r.querySelectorAll('.nomlink').forEach(x => x.style.display = 'none');
       const b = document.createElement('div'); b.className = 'insBox';
-      b.innerHTML = `<div class="insT">🆕 ¿Es su primera vez en el portal?</div><div class="insX">Si nunca se ha inscrito, <b>primero inscríbase</b>. Después entra con su RUT y su clave.</div>${botonInsc('INSCRIBIRME AQUÍ')}`;
+      b.innerHTML = `<div class="insT">🆕 ¿Es su primera vez en el portal?</div><div class="insX">Si nunca se ha inscrito, <b>primero inscríbase</b>. El área de <b>Prevención o RR.HH.</b> verificará y aceptará su inscripción, según corresponda. Después entre con su RUT y su clave.</div>${botonInsc('INSCRIBIRME AQUÍ')}`;
       r.appendChild(b);
     }
     // a) el servidor no lo encontró en la nómina
     const rq = r.querySelector('.rq');
     if (rq && !$('rutHome') && /no te reconoce|No te encontramos/i.test(rq.textContent) && !r.querySelector('.insBox')) {
       const rut = (typeof RUTA !== 'undefined' && RUTA && RUTA.rut) || '';
-      rq.innerHTML = `<b>Usted aún no está inscrito.</b> El RUT ${rut} no aparece en la nómina de ${EMPN}. Primero debe inscribirse; el prevencionista aceptará la inscripción.`;
+      rq.innerHTML = `<b>Usted aún no está inscrito.</b> El RUT ${rut} no aparece en la nómina de ${EMPN}. Primero debe inscribirse; el área de Prevención o Recursos Humanos verificará y aceptará su inscripción.`;
       const b = document.createElement('div'); b.className = 'insBox'; b.innerHTML = botonInsc('INSCRIBIRME AHORA'); rq.after(b);
       if (avisado !== rut) { avisado = rut; aviso('noreg', rut); }
     }
