@@ -1361,3 +1361,129 @@
   try { document.addEventListener('DOMContentLoaded', arreglar); window.addEventListener('load', arreglar); document.addEventListener('click', arreglar, true); } catch (e) {}
   let n = 0; const iv = setInterval(() => { arreglar(); if (++n > 20) clearInterval(iv); }, 1000);
 })();
+
+// 100) 12-11-2026 · Ingreso más claro para el trabajador (todos los portales):
+//  a) Quien no está inscrito ve un aviso grande y un botón AMARILLO que abre la inscripción guiada de su empresa (inscripcion-san-ignacio/?e=...).
+//  b) En la pantalla de ingreso hay un recuadro visible "¿Primera vez? Inscríbase aquí".
+//  c) Al entrar, arriba aparece "SU CHARLA DE AHORA" con un botón grande para comenzarla; la tarjeta de esa charla queda marcada.
+//  d) Cuando la voz dice "toque el botón amarillo", el botón ES amarillo en todos los portales.
+//  e) Lámina del EPP: "Te protege del peligro que no se pudo eliminar" (más fácil de entender que "lo que el control no alcanzó a eliminar").
+(function () {
+  if (window.__mj100) return; window.__mj100 = true;
+  const $ = id => document.getElementById(id);
+  const INSC = 'https://danielzunino.github.io/inscripcion-san-ignacio/?e=';
+  const key = ((location.pathname.match(/capacitaciones-([a-z0-9-]+)/) || [])[1] || '').toLowerCase();
+  const DATOS = {
+    constructor: ['constructor', 'Constructor Center'], oym: ['oym', 'OYM Center'], plaza: ['plaza', 'Constructora Plaza'], prosip: ['prosip', 'PROSIP'],
+    montasip: ['montasip', 'Montasip'], zg: ['zg', 'ZG SpA'], transporteszg: ['zg', 'Transportes ZG SpA'], perello: ['perello', 'Perelló'],
+    hotel: ['hotel', 'Hotel Salto del Laja'], ali: ['ali', 'Maestranza ALI'] };
+  const SI = key === 'san-ignacio';
+  const SI_EMP = [['lacteos', 'Lácteos San Ignacio'], ['agroex', 'Agroexportaciones Chile'], ['agricola', 'Agrícola San Ignacio'], ['inversiones', 'Inversiones San Ignacio']];
+  const D = DATOS[key] || null, EMPN = SI ? 'su empresa' : D ? D[1] : 'la empresa';
+  const URL_INSC = D ? INSC + D[0] : '';
+  const AM = '#FFC20E', OSC = '#1F2328';
+  const hablar = t => { try { VOZ.say(t); } catch (e) {} };
+
+  // ---- estilos (botón amarillo de verdad, aviso de inscripción y tarjeta "Su charla de ahora")
+  const css = document.createElement('style');
+  css.textContent = `#bDip, #bDl, #vbAct, .amarillo { background:${AM} !important; color:${OSC} !important; border:0 !important; }
+#bDip:disabled { opacity:.45; }
+.insBox { margin-top:14px; background:#FFF8E1; border:3px solid ${AM}; border-radius:16px; padding:14px; text-align:center; color:${OSC}; }
+.insBox .insT { font-weight:bold; font-size:17px; } .insBox .insX { font-size:14.5px; color:#4A4F55; margin:6px 0 10px; line-height:1.35; }
+.insBtn { display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none; background:${AM}; color:${OSC} !important; font-weight:bold; font-size:18px; border-radius:14px; padding:14px 12px; border:0; width:100%; box-sizing:border-box; cursor:pointer; box-shadow:0 4px 0 #C99700; animation:insLat 1.6s ease-in-out infinite; }
+.insBtn small { display:block; font-weight:normal; font-size:12.5px; }
+.insBtns { display:flex; flex-direction:column; gap:8px; }
+@keyframes insLat { 0%,100% { transform:scale(1) } 50% { transform:scale(1.03) } }
+#nomModal { display:none; position:fixed; inset:0; background:rgba(15,18,22,.78); z-index:10000; align-items:center; justify-content:center; padding:16px; }
+#nomModal.on { display:flex; } #nomModal .nmbox { background:#fff; color:${OSC}; border-radius:18px; padding:20px; max-width:400px; width:100%; display:flex; flex-direction:column; gap:10px; text-align:center; border-top:8px solid ${AM}; max-height:92vh; overflow:auto; box-sizing:border-box; }
+#nomModal .nmic { font-size:46px; line-height:1; } #nomModal h3 { margin:0; font-size:22px; color:${OSC}; } #nomModal p { color:#30363D; margin:0; font-size:15.5px; }
+#nomModal .lnk { background:none; border:0; color:#37474F; text-decoration:underline; font:inherit; cursor:pointer; padding:6px; text-align:center; align-self:center; } #nomModal .nmPasos { text-align:left; margin:0; padding-left:22px; font-size:15px; color:#30363D; } #nomModal .nmPasos li { margin:5px 0; }
+#nomModal .nmRut { background:#FDECEA; border-left:6px solid #C62828; border-radius:8px; padding:10px 12px; text-align:left; font-size:15px; color:#3A1210; }
+#ahoraCard { background:linear-gradient(135deg,#FFF8E1,#FFFFFF); border:3px solid ${AM}; border-radius:18px; padding:14px; margin:0 0 14px; color:${OSC}; box-shadow:0 6px 16px rgba(0,0,0,.12); }
+#ahoraCard .ahT { font-size:13px; font-weight:bold; letter-spacing:1px; color:#B45309; } #ahoraCard .ahN { font-size:20px; font-weight:bold; margin:4px 0 2px; line-height:1.2; }
+#ahoraCard .ahS { font-size:13.5px; color:#4A4F55; margin-bottom:10px; } #ahoraCard .ahS.atr { color:#C62828; font-weight:bold; }
+#ahoraCard .ahM { font-size:12.5px; color:#6B7280; margin-top:8px; text-align:center; }
+.tcard .tb.ahora { background:${AM}; color:${OSC}; font-size:12px; animation:insLat 1.6s ease-in-out infinite; }
+.tcard.ahora { box-shadow:0 0 0 4px ${AM} inset !important; }`;
+  document.head.appendChild(css);
+
+  // ---- botón(es) que abren la inscripción guiada
+  const botonInsc = (txt) => SI
+    ? '<div class="insX" style="margin:0 0 6px"><b>Toque la empresa donde trabaja:</b></div><div class="insBtns">' + SI_EMP.map(e => `<a class="insBtn" target="_blank" rel="noopener" href="${INSC + e[0]}">📝 ${e[1]}</a>`).join('') + '</div>'
+    : `<a class="insBtn" id="insGo" target="_blank" rel="noopener" href="${URL_INSC}">📝 ${txt || 'INSCRIBIRME AQUÍ'}</a>`;
+  try { if (URL_INSC && typeof IND_FORMULARIO !== 'undefined') IND_FORMULARIO = URL_INSC; } catch (e) {}
+
+  // ---- aviso cuando el RUT no está en la nómina (o la inscripción aún no se acepta)
+  function aviso(tipo, rut) {
+    let m = $('nomModal'); if (!m) { m = document.createElement('div'); m.id = 'nomModal'; document.body.appendChild(m); }
+    const pend = tipo === 'pendiente';
+    m.innerHTML = `<div class="nmbox"><div class="nmic">${pend ? '⏳' : '📝'}</div>
+      <h3>${pend ? 'Su inscripción está en revisión' : 'Usted aún no está inscrito en el portal'}</h3>
+      ${pend ? `<p>Ya recibimos su inscripción${rut ? ' (RUT ' + rut + ')' : ''}, pero <b>el prevencionista aún no la acepta</b>.</p><p>Apenas la acepte podrá entrar con su RUT y su clave. Si ya pasó más de un día, avise a su jefatura.</p>`
+        : `<div class="nmRut">${rut ? 'El RUT <b>' + rut + '</b> no aparece' : 'Su RUT no aparece'} en la nómina de ${EMPN}.</div>
+        <p style="font-size:16px"><b>Primero debe inscribirse.</b> Es fácil: el teléfono le va leyendo cada pregunta.</p>
+        ${botonInsc('INSCRIBIRME AHORA')}
+        <ol class="nmPasos"><li>Toque el botón <b>amarillo</b> y responda las preguntas.</li><li>Espere que el prevencionista acepte su inscripción.</li><li>Vuelva aquí y entre con su RUT y su clave.</li></ol>`}
+      <button class="${pend ? 'btn' : 'lnk'}" id="nmX">${pend ? 'Entendido' : 'Me equivoqué al escribir el RUT'}</button></div>`;
+    m.className = 'on';
+    $('nmX').onclick = () => { m.className = ''; try { GUIA.hide(); } catch (e) {} const r = $('rutHome'); if (r && !pend) { r.focus(); r.select && r.select(); } };
+    try { SFX.play('bad'); } catch (e) {}
+    hablar(pend ? 'Su inscripción está en revisión. Apenas el prevencionista la acepte, podrá entrar.'
+      : 'Usted aún no está inscrito. Primero debe inscribirse. Toque el botón amarillo y responda las preguntas.');
+    if (!pend) setTimeout(() => { try { const g = m.querySelector('.insBtn'); if (g && m.className === 'on') GUIA.at(g, 'TOQUE AQUÍ'); } catch (e) {} }, 400);
+  }
+  const instalarAviso = () => { window.alertaNomina = aviso; try { alertaNomina = aviso; } catch (e) {} try { inscripcionPerello = () => aviso('noreg', ''); } catch (e) {} };
+  instalarAviso(); window.addEventListener('load', instalarAviso); setTimeout(instalarAviso, 0); setTimeout(instalarAviso, 1500);
+  // enlaces viejos "#inscribirme" o al formulario de Google: abren el aviso con la inscripción guiada
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[href="#inscribirme"], a.indbtn[href*="docs.google.com/forms"], a.nomlink[href*="docs.google.com/forms"], #nomModal a[href*="docs.google.com/forms"]'); if (!a) return;
+    e.preventDefault(); e.stopPropagation(); aviso('noreg', '');
+  }, true);
+
+  // ---- arreglos dentro del inicio (#ruta): recuadro de inscripción, aviso de "no te reconoce" y "Su charla de ahora"
+  let avisado = '';
+  function arreglarRuta() {
+    const r = $('ruta'); if (!r) return;
+    // b) pantalla de ingreso
+    if ($('rutHome') && !r.querySelector('.insBox')) {
+      r.querySelectorAll('.nomlink').forEach(x => x.style.display = 'none');
+      const b = document.createElement('div'); b.className = 'insBox';
+      b.innerHTML = `<div class="insT">🆕 ¿Es su primera vez en el portal?</div><div class="insX">Si nunca se ha inscrito, <b>primero inscríbase</b>. Después entra con su RUT y su clave.</div>${botonInsc('INSCRIBIRME AQUÍ')}`;
+      r.appendChild(b);
+    }
+    // a) el servidor no lo encontró en la nómina
+    const rq = r.querySelector('.rq');
+    if (rq && !$('rutHome') && /no te reconoce|No te encontramos/i.test(rq.textContent) && !r.querySelector('.insBox')) {
+      const rut = (typeof RUTA !== 'undefined' && RUTA && RUTA.rut) || '';
+      rq.innerHTML = `<b>Usted aún no está inscrito.</b> El RUT ${rut} no aparece en la nómina de ${EMPN}. Primero debe inscribirse; el prevencionista aceptará la inscripción.`;
+      const b = document.createElement('div'); b.className = 'insBox'; b.innerHTML = botonInsc('INSCRIBIRME AHORA'); rq.after(b);
+      if (avisado !== rut) { avisado = rut; aviso('noreg', rut); }
+    }
+    // c) su charla de ahora
+    const plan = r.querySelector('.plan');
+    if (plan && !$('ahoraCard')) {
+      const li = [...plan.querySelectorAll('li')].find(x => !x.classList.contains('ok') && x.querySelector('.pgo'));
+      if (li) {
+        const go = li.querySelector('.pgo'), pt = li.querySelector('.pt'), sm = pt && pt.querySelector('small');
+        const nombre = pt ? [...pt.childNodes].filter(n => n !== sm).map(n => n.textContent).join('').trim() : 'Su charla';
+        const c = document.createElement('div'); c.id = 'ahoraCard';
+        c.innerHTML = `<div class="ahT">👉 SU CHARLA DE AHORA</div><div class="ahN"></div><div class="ahS${li.classList.contains('atr') ? ' atr' : ''}"></div>
+          <button class="insBtn" id="ahoraGo">▶ COMENZAR AHORA</button><div class="ahM">Cuando la apruebe, aquí le aparecerá la siguiente.</div>`;
+        c.querySelector('.ahN').textContent = nombre; c.querySelector('.ahS').textContent = sm ? sm.textContent : '';
+        c.querySelector('#ahoraGo').onclick = () => go.click();
+        r.insertBefore(c, r.firstChild);
+        const id = go.dataset.id;
+        document.querySelectorAll('.tcard').forEach(t => { t.classList.remove('ahora'); t.querySelectorAll('.tb.ahora').forEach(x => x.remove()); });
+        const tc = id && document.querySelector('.tcard[data-id="' + id + '"]');
+        if (tc) { tc.classList.add('ahora'); const bd = document.createElement('span'); bd.className = 'tb ahora'; bd.textContent = '👉 LE TOCA AHORA'; (tc.querySelector('.tt') || tc).appendChild(bd); }
+        if (window.__ahoraDicho !== nombre) { window.__ahoraDicho = nombre; setTimeout(() => { try { if ($('s-home') && $('s-home').classList.contains('on') && document.body.contains(c)) GUIA.at('ahoraGo', 'COMENZAR'); } catch (e) {} }, 2500); }
+      }
+    }
+  }
+  const iniciar = () => { const r = $('ruta'); if (!r || r.__mj100) return; r.__mj100 = true; new MutationObserver(() => arreglarRuta()).observe(r, { childList: true }); arreglarRuta();
+    const sc = $('secciones'); if (sc) new MutationObserver(() => { const c = $('ahoraCard'); if (c) { c.remove(); arreglarRuta(); } }).observe(sc, { childList: true }); };
+  iniciar(); document.addEventListener('DOMContentLoaded', iniciar); window.addEventListener('load', iniciar);
+
+  // ---- e) lámina del EPP más clara
+  try { if (typeof S !== 'undefined' && S.c5ep_que && !S.c5ep_que.__mj100) { const f = S.c5ep_que; S.c5ep_que = function () { return String(f.apply(this, arguments)).replace('Protege de lo que el control no alcanzó a eliminar', 'Te protege del peligro que no se pudo eliminar'); }; S.c5ep_que.__mj100 = true; } } catch (e) {}
+})();
