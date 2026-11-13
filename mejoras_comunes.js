@@ -1063,7 +1063,7 @@
         if (partio || u.__mjFin || err === 'not-allowed' || err === 'interrupted' || err === 'canceled' || paso >= 2) return;
         if (u.voice) malas.add(u.voice.name);
         const c = new SpeechSynthesisUtterance(u.text); c.__mjClon = true; c.rate = u.rate; c.pitch = u.pitch; c.volume = u.volume;
-        if (paso === 0) { const v = candidata(); if (v && (!u.voice || v.name !== u.voice.name)) { c.voice = v; c.lang = v.lang; } else c.lang = 'es-ES'; }
+        if (paso === 0) { const v = candidata(); if (v && (!u.voice || v.name !== u.voice.name)) { c.voice = v; c.lang = v.lang; } else c.lang = 'es-ES'; } else c.lang = 'es-ES';   // nunca sin idioma: el teléfono podría leer en inglés
         // paso 1 -> 2: sin voz ni idioma: el teléfono usa su voz por defecto
         c.onstart = u.onstart; c.onend = u.onend; c.onerror = u.onerror; c.onboundary = u.onboundary;
         u.onstart = u.onend = u.onerror = u.onboundary = null; u.__mjFin = true;
@@ -1071,13 +1071,13 @@
         setTimeout(() => { try { intentar(c, paso + 1); sp(c); } catch (e) {} }, 120);
       };
       u.addEventListener('end', () => { u.__mjFin = true; });
-      setTimeout(siguiente, paso === 0 ? 1800 : 1500);
+      setTimeout(siguiente, paso === 0 ? 3500 : 2500);   // no cambiar de voz a media frase si el teléfono tarda en partir
     };
     ss.speak = function (u) {
       try {
         if (u && !u.__mjClon && u.text && u.text.trim().length > 1 && u.volume !== 0) {
-          if (buena !== undefined && (!u.voice || malas.has(u.voice.name))) { u.voice = buena; u.lang = buena ? buena.lang : ''; }
-          else if (u.voice && malas.has(u.voice.name)) { u.voice = buena || null; u.lang = buena ? buena.lang : ''; }
+          if (buena !== undefined && (!u.voice || malas.has(u.voice.name))) { u.voice = buena; u.lang = buena ? buena.lang : 'es-ES'; }
+          else if (u.voice && malas.has(u.voice.name)) { u.voice = buena || null; u.lang = buena ? buena.lang : 'es-ES'; }
           if (!hayToque()) { pendiente = u.text; D.toque = true; D.err = 'falta tocar la pantalla'; }
           try { if (ss.paused) ss.resume(); } catch (e) {}
           intentar(u, 0);
@@ -1125,7 +1125,7 @@
               + '<li>Toca el engranaje ⚙️ del motor → ' + Y('Instalar datos de voz') + ' → ' + Y('Español') + ' y descárgalo.</li>'
               + '<li>Vuelve aquí y toca ' + Y('Probar otra vez') + '.</li></ol>') + '<div style="margin-top:6px">Mientras tanto, la charla funciona igual leyendo el texto.</div>'; return; }
           const v = vs[k++]; const u = new SpeechSynthesisUtterance('Listo, la lectura está activada.'); u.__mjClon = true; u.volume = 1;
-          if (v) { u.voice = v; u.lang = v.lang; }
+          if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'es-ES';
           let partio = false;
           u.onstart = () => { partio = true; listo = true; buena = v; D.voz = v ? v.name : '(por defecto)'; D.err = ''; window.__vozOk = true; try { vozFallas = 0; } catch (e) {} };
           u.onend = () => { if (!partio) return; cerrar(); pendiente = null; const o = document.getElementById('bOir'); if (o && o.offsetParent) setTimeout(() => o.click(), 300); };
