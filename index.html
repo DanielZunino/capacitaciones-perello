@@ -5747,7 +5747,7 @@ function registroCanvas(D) {
   section(1, 'Identificación de la actividad');
   const rows = [
     ['Participante', D.name], ['RUT', D.rut], ...filasEmpresa(D, TM), ['Capacitación', t.title],
-    ['Fecha', D.fecha], ...(t.id === 'induccion' ? [['Vigencia', 'Hasta el ' + (() => { const v = venceInduccion(D.fecha); return v ? dmy(new Date(v)) : '18 meses'; })() + ' (18 meses)']] : []), ['Hora de registro', D.horas || '—'],
+    ['Fecha', D.fecha], ...(t.id === 'induccion' ? [['Vigencia', 'Hasta el ' + (() => { const v = venceInduccion(D.fecha); return v ? dmy(new Date(v)) : '18 meses'; })() + ' (18 meses)']] : []), ['Hora de inicio', String(D.horas || '—').replace(/\s*a\s*\d{1,2}:\d{2}/, '')],
     ...(TM.modal === 'distancia' ? [] : [[TM.modal === 'digital' ? 'Duración de la actividad' : 'Duración de la sesión', D.dur + ' min (contenidos y evaluación)']]),
     
     ['Modalidad', TM.modalidad],
