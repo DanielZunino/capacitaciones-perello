@@ -5749,7 +5749,7 @@ function registroCanvas(D) {
     ['Participante', D.name], ['RUT', D.rut], ...filasEmpresa(D, TM), ['Capacitación', t.title],
     ['Fecha', D.fecha], ...(t.id === 'induccion' ? [['Vigencia', 'Hasta el ' + (() => { const v = venceInduccion(D.fecha); return v ? dmy(new Date(v)) : '18 meses'; })() + ' (18 meses)']] : []), ['Hora de registro', D.horas || '—'],
     ...(TM.modal === 'distancia' ? [] : [[TM.modal === 'digital' ? 'Duración de la actividad' : 'Duración de la sesión', D.dur + ' min (contenidos y evaluación)']]),
-    ['Tiempo en la plataforma', (D.tiempo || '—') + ' min (lectura, evaluación y firma)'],
+    
     ['Modalidad', TM.modalidad],
     ...(TM.modal === 'presencial' && !TM.conRelator ? [['Dirigida por', TM.dirige.nombre + (TM.dirige.cargo ? ' · ' + TM.dirige.cargo : '')]] : []),
     [TM.rolRelator, RELATOR.nombre + ' · ' + RELATOR.cargo + ' · ' + RELATOR.reg + ' · ' + RELATOR.emp]
