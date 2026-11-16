@@ -7857,4 +7857,52 @@ window.MARCA = { nombre: 'Perelló', c1: '#0F543A', c2: '#8C7548', fuente: 'Geor
 </script>
 <script src="mejoras_comunes.js?v=2"></script>
 <script src="perello_extra.js?v=1"></script>
+<script>
+/* ===== Firma natural (13-11-2026): trazo suave como lápiz real, grosor según la velocidad, sin deformar al guardarla ===== */
+(function () {
+  try {
+    const g = document.getElementById('sig'); if (!g || g.__natural) return; g.__natural = true;
+    const cx = g.getContext('2d');
+    let pts = [], dib = false, bb = null, wPrev = 0;
+    const dpr = () => window.devicePixelRatio || 1;
+    const ajusta = () => { try { const r = g.getBoundingClientRect(); if (!r.width || !r.height) return; const k = dpr();
+      if (Math.abs(g.width - r.width * k) > 2 || Math.abs(g.height - r.height * k) > 2) { if (typeof sizeSig === 'function') sizeSig(); else { g.width = r.width * k; g.height = r.height * k; } bb = null; } } catch (e) {} };
+    const pos = e => { const r = g.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top, t: e.timeStamp || Date.now(), p: e.pressure }; };
+    const ancho = (a, b) => {   // más rápido = más delgado; con lápiz (stylus) usa la presión real
+      const v = Math.hypot(b.x - a.x, b.y - a.y) / Math.max(1, b.t - a.t);
+      let w = Math.max(1, Math.min(3.1, 3.1 - v * 1.4));
+      if (b.p && b.p !== .5 && b.p > 0) w = .9 + b.p * 2.6;
+      wPrev = wPrev ? wPrev * .6 + w * .4 : w; return wPrev;
+    };
+    const marca = (x, y, w) => { const k = dpr(); if (!bb) bb = { x0: x, y0: y, x1: x, y1: y }; bb.x0 = Math.min(bb.x0, x - w); bb.y0 = Math.min(bb.y0, y - w); bb.x1 = Math.max(bb.x1, x + w); bb.y1 = Math.max(bb.y1, y + w); };
+    const tramo = () => {   // curva suave entre puntos medios (sin esquinas)
+      const n = pts.length; if (n < 2) return;
+      const a = pts[n - 3] || pts[n - 2], b = pts[n - 2], c = pts[n - 1];
+      const m1 = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, m2 = { x: (b.x + c.x) / 2, y: (b.y + c.y) / 2 };
+      const w = ancho(b, c);
+      cx.save(); cx.setTransform(dpr(), 0, 0, dpr(), 0, 0); cx.strokeStyle = '#13235C'; cx.lineCap = 'round'; cx.lineJoin = 'round'; cx.lineWidth = w;
+      cx.beginPath(); cx.moveTo(n < 3 ? b.x : m1.x, n < 3 ? b.y : m1.y); cx.quadraticCurveTo(b.x, b.y, m2.x, m2.y); cx.stroke(); cx.restore();
+      marca(b.x, b.y, w); marca(c.x, c.y, w);
+      try { ink += Math.hypot(c.x - b.x, c.y - b.y); if (ink > 60 && !signed) { signed = true; checkDip(); } } catch (e) {}
+    };
+    const punto = p => { cx.save(); cx.setTransform(dpr(), 0, 0, dpr(), 0, 0); cx.fillStyle = '#13235C'; cx.beginPath(); cx.arc(p.x, p.y, 1.4, 0, Math.PI * 2); cx.fill(); cx.restore(); marca(p.x, p.y, 1.6); };
+    window.addEventListener('pointerdown', e => { if (e.target !== g) return; e.stopPropagation(); e.preventDefault(); ajusta();
+      dib = true; wPrev = 0; pts = [pos(e)]; punto(pts[0]); try { g.setPointerCapture(e.pointerId); } catch (x) {} try { drawing = false; } catch (x) {} }, true);
+    window.addEventListener('pointermove', e => { if (e.target !== g) return; e.stopPropagation(); e.preventDefault(); if (!dib) return;
+      const lista = e.getCoalescedEvents ? e.getCoalescedEvents() : [e]; (lista.length ? lista : [e]).forEach(ev => { const p = pos(ev); const u = pts[pts.length - 1]; if (u && Math.hypot(p.x - u.x, p.y - u.y) < .8) return; pts.push(p); tramo(); }); }, true);
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => window.addEventListener(t, e => { if (e.target !== g) return; e.stopPropagation(); if (dib && pts.length > 1) { pts.push(pts[pts.length - 1]); tramo(); } dib = false; pts = []; }, true));
+    const clr = document.getElementById('bClr'); if (clr) clr.addEventListener('click', () => { bb = null; });
+    try { if (window.ResizeObserver) new ResizeObserver(ajusta).observe(g); } catch (e) {}
+    // al guardar: se recorta a la firma y se escala SIN deformar (misma proporción del trazo), en alta resolución
+    const capturar = () => {
+      const W = 1440, H = 510, out = document.createElement('canvas'); out.width = W; out.height = H; const o = out.getContext('2d');
+      const k = dpr(); let sx = 0, sy = 0, sw = g.width, sh = g.height;
+      if (bb) { const pad = 6; sx = Math.max(0, (bb.x0 - pad) * k); sy = Math.max(0, (bb.y0 - pad) * k); sw = Math.min(g.width - sx, (bb.x1 - bb.x0 + pad * 2) * k); sh = Math.min(g.height - sy, (bb.y1 - bb.y0 + pad * 2) * k); }
+      if (sw > 4 && sh > 4) { const f = Math.min(W * .96 / sw, H * .92 / sh, 6); const dw = sw * f, dh = sh * f; o.imageSmoothingQuality = 'high'; o.drawImage(g, sx, sy, sw, sh, (W - dw) / 2, (H - dh) / 2, dw, dh); }
+      _sig = out;
+    };
+    try { captureSig = capturar; } catch (e) {} window.captureSig = capturar;
+  } catch (e) { console.log('firma natural: ' + e); }
+})();
+</script>
 </body></html>
