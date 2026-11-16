@@ -5845,7 +5845,13 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyWjfVll6bq0hZKZenjH
 const RELATOR = { nombre:'Daniel Zunino Urrutia', cargo:'Asesor en Prevención de Riesgos', reg:'Reg. BB/P-226', emp:'Integra Prevención SpA' };
 const EXIGENCIA = 0.6;
 const DUR_DEF = 60; // minutos de la sesión presencial con el relator (se puede cambiar por tema con dur:)
-const durTema = t => t.dur || DUR_DEF;
+// Duración que dice el diploma (criterio DS 44, 16-11-2026): IRL 3 h · EPP 1 h · temas con procedimiento 1 h · temas generales 30 min. Módulos DS 44 con su propia duración.
+const DUR_TEMA = (id, title) => { const k = (String(id || '') + ' ' + String(title || '')).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (/^induccion|\birl\b/.test(k)) return 180;
+  if (/^epp\b|proteccion personal/.test(k)) return 60;
+  if (/horquilla|maquin|quimic|herramient|altura|andamio|excavac|zanja|electric|caliente|soldad|izaje|grua|camion|conduc|vehicul|tractor|aplicac|agroquim|confinad|motosierra|camara|bloqueo|caldera/.test(k)) return 60;
+  return 30; };
+const durTema = t => (t && /^m\d$/.test(t.id) && t.dur) ? t.dur : DUR_TEMA(t && t.id, t && t.title);
 const APP_URL = location.origin + location.pathname;
 const firmaRel = new Image(); firmaRel.src = FIRMA_RELATOR;
 const $ = id => document.getElementById(id);
