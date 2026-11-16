@@ -151,7 +151,7 @@ $('#cont').innerHTML = `<div class="card"><h3>📝 INSCRIPCIONES POR ACEPTAR</h3
 <div class="filtros">${[['', 'Todas'], ['Planta', '🏭 Planta y administrativos'], ['Temporero', '🍂 Temporeros']].map(([k, t]) => `<button class="chip${fIns === k ? ' on' : ''}" data-fi="${k}">${t} (${(D.pendientes || []).filter(x => !k || (k === 'Temporero' ? x.t === 'Temporero' : x.t !== 'Temporero')).length})</button>`).join('')}</div>
 <p style="margin:0 0 10px;font-size:13px;color:#6B7280">También puede aceptarlas en las hojas <b>Planta</b> y <b>Temporeros</b> de la planilla de respuestas. Personas que llenaron la Ficha de Inscripción y aún no pueden entrar a las charlas. Al aceptar, queda <b>ACTIVO</b> en la nómina y puede ingresar de inmediato con su RUT y su clave.</p>
 ${L.map(x => `<div class="per"><div><div class="nm">${esc(x.n)}</div><div class="sb">${bTipo(x.t)} ${esc(x.r)} · ${esc(x.c || 'sin cargo')} · 📍 ${esc(x.s || '')}${x.f ? ' · inscrito el ' + esc(x.f) : ''}</div>${x.a ? `<div class="sb">🧭 ${esc(x.a)}${x.fu && !/^ninguna$/i.test(x.fu) ? ' · 🚦 ' + esc(x.fu) : ''}</div>` : ''}</div>
-<div class="bd"><button class="btn az" data-acep="${esc(x.r)}">✔ Aceptar</button><button class="btn" style="background:#ECEFF1" data-rech="${esc(x.r)}">Rechazar</button></div></div>`).join('') || '<div class="vacio">No hay inscripciones pendientes 🎉</div>'}</div>`;
+<div class="bd"><button class="btn az" data-acep="${esc(x.r)}">✔ Activar</button><button class="btn" style="background:#ECEFF1" data-rech="${esc(x.r)}">Rechazar</button></div></div>`).join('') || '<div class="vacio">No hay inscripciones pendientes 🎉</div>'}</div>`;
 const enviar = (rut, estado, b) => { b.disabled = true; b.textContent = 'Guardando…';
 fetch(URL_API, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ accion: 'inscripcion', h: AUTH.h, k: AUTH.k, rut, estado }) })
 .then(() => { D.pendientes = D.pendientes.filter(x => x.r !== rut); pintar(); setTimeout(() => cargar(true), 4000); }).catch(() => { b.disabled = false; b.textContent = 'Reintentar'; }); };
@@ -168,7 +168,7 @@ const selSuc = (v, id) => `<select data-suc-de="${esc(id)}"><option value="">Tod
 $('#cont').innerHTML = `<div class="card"><h3>👥 JEFATURAS Y ADMINISTRADORES</h3>
 <p style="margin:0 0 10px;font-size:13px;color:#6B7280">Las jefaturas entran a este panel con su RUT y su misma clave de capacitaciones. Una jefatura ve solo la planta que se le asigne; un administrador ve todo y acepta inscripciones.</p>
 ${J.map(j => `<div class="per" style="${j.act ? '' : 'opacity:.55'}"><div><div class="nm">${esc(j.n)}</div><div class="sb">${esc(j.r)} · ${j.rol === 'Administrador' ? '⭐ Administrador' : 'Jefatura · ' + esc(j.suc || 'todas las plantas')}</div></div>
-<div class="bd">${j.rol === 'Administrador' ? '' : selSuc(j.suc, j.r)}<button class="btn" style="background:#ECEFF1" data-tog="${esc(j.r)}">${j.act ? 'Desactivar' : 'Activar'}</button></div></div>`).join('') || '<div class="vacio">Aún no hay jefaturas.</div>'}</div>
+<div class="bd">${j.rol === 'Administrador' ? '' : selSuc(j.suc, j.r)}<button class="btn" style="background:#ECEFF1" data-tog="${esc(j.r)}">${j.act ? 'Quitar acceso al panel' : 'Dar acceso al panel'}</button></div></div>`).join('') || '<div class="vacio">Aún no hay jefaturas.</div>'}</div>
 <div class="card"><h3>➕ AGREGAR JEFATURA</h3><div class="filtros"><input class="buscar" id="qJ" placeholder="Busque por nombre, RUT o cargo (debe estar en la nómina)" value="${esc(qJ)}"></div>
 ${res.map(p => `<div class="per"><div><div class="nm">${esc(p.n)}</div><div class="sb">${esc(p.r)} · ${esc(p.c)} · ${esc(p.s)}</div></div><div class="bd">${selSuc('', 'n' + p.r)}
 <button class="btn az" data-addj="${esc(p.r)}">Jefatura</button><button class="btn" data-adda="${esc(p.r)}">Administrador</button></div></div>`).join('') || (qJ.trim().length >= 2 ? '<div class="vacio">No se encontró en la nómina activa.</div>' : '')}</div>`;
@@ -178,10 +178,10 @@ fetch(URL_API, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'te
 if (j) Object.assign(j, { rol, suc, act: activo }); else J.push({ n: p ? p.n : rut, r: rut, rol, suc, act: activo }); D.jefaturas = J; qJ = ''; vJefaturas(); setTimeout(() => cargar(true), 5000); })
 .catch(() => { if (b) { b.disabled = false; b.textContent = 'Reintentar'; } }); };
 const sucDe = id => { const e = document.querySelector(`[data-suc-de="${id}"]`); return e ? e.value : ''; };
-document.querySelectorAll('[data-tog]').forEach(b => b.onclick = () => { const j = J.find(x => x.r === b.dataset.tog); guardar(j.r, j.rol, j.suc, !j.act, b); });
+document.querySelectorAll('[data-tog]').forEach(b => b.onclick = () => { const j = J.find(x => x.r === b.dataset.tog); if (!confirm((j.act ? '¿Quitar a ' : '¿Dar a ') + j.n + (j.act ? ' el acceso a este panel de jefaturas?' : ' acceso a este panel de jefaturas?') + '\n\nEsto NO cambia la nómina. Para activar a un trabajador use Inscripciones › Activar.')) return; guardar(j.r, j.rol, j.suc, !j.act, b); });
 document.querySelectorAll('[data-suc-de]').forEach(e => { if (/^n/.test(e.dataset.sucDe)) return; e.onchange = () => { const j = J.find(x => x.r === e.dataset.sucDe); guardar(j.r, j.rol, e.value, j.act); }; });
-document.querySelectorAll('[data-addj]').forEach(b => b.onclick = () => guardar(b.dataset.addj, 'Jefatura', sucDe('n' + b.dataset.addj), true, b));
-document.querySelectorAll('[data-adda]').forEach(b => b.onclick = () => guardar(b.dataset.adda, 'Administrador', '', true, b));
+document.querySelectorAll('[data-addj]').forEach(b => b.onclick = () => { if (!confirm('¿Dar acceso al panel como JEFATURA?\n\nEsto NO cambia la nómina.')) return; guardar(b.dataset.addj, 'Jefatura', sucDe('n' + b.dataset.addj), true, b); });
+document.querySelectorAll('[data-adda]').forEach(b => b.onclick = () => { if (!confirm('¿Dar acceso al panel como ADMINISTRADOR (ve todo y activa inscripciones)?\n\nEsto NO cambia la nómina.')) return; guardar(b.dataset.adda, 'Administrador', '', true, b); });
 $('#qJ').oninput = e => { qJ = e.target.value; clearTimeout(window.__tj); window.__tj = setTimeout(() => { vJefaturas(); const i = $('#qJ'); i.focus(); i.setSelectionRange(qJ.length, qJ.length); }, 250); };
 }
 // Inicio rápido: muestra los últimos datos guardados de esta misma persona y actualiza en segundo plano
